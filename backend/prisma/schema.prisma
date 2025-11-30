@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum HelpRequestStatus {
+  OPEN
+  TAKEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  TIMEOUT
+}
+
+enum AssignmentStatus {
+  TAKEN
+  CONFIRMED
+  FAILED
+  COMPLETED
+}
+
+enum NotificationType {
+  HELP
+  MISSION
+  BADGE
+  CHAT
+  SYSTEM
+}
+
+enum MissionCategory {
+  DAILY
+  WEEKLY
+  GENERAL
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+}
+
+enum TokenType {
+  VERIFICATION
+  RESET
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  full_name        String           @db.VarChar(150)
+  email            String           @unique @db.VarChar(150)
+  phone            String?          @db.VarChar(30)
+  password         String           @db.VarChar(255)
+  avatar_url       String?
+  points           Int              @default(0)
+  reputation_score Int              @default(100)
+  role             UserRole         @default(USER)
+  isVerified       Boolean          @default(false)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  helpRequests     HelpRequest[]
+  helpAssignments  HelpAssignment[]
+  messages         Message[]
+  notifications    Notification[]
+  userMissions     UserMission[]
+  userBadges       UserBadge[]
+  reportsMade      Report[]         @relation("ReportsByUser")
+  reportsReceived  Report[]         @relation("ReportsToUser")
+  auditLogs        AuditLog[]
+
+  emailTokens      EmailToken[]
+}
+
+model HelpRequest {
+  id               Int                 @id @default(autoincrement())
+  user_id          Int
+  title            String              @db.VarChar(200)
+  description      String
+  category         String              @db.VarChar(100)
+  latitude         Float
+  longitude        Float
+  radius           Int                 @default(5000)
+  status           HelpRequestStatus   @default(OPEN)
+  timeout_at       DateTime?
+  grace_period_end DateTime?
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
+  deleted_at       DateTime?
+
+  user             User                @relation(fields: [user_id], references: [id])
+  assignments      HelpAssignment[]
+  messages         Message[]
+  reports          Report[]
+}
+
+model HelpAssignment {
+  id               Int              @id @default(autoincrement())
+  help_request_id  Int
+  helper_id        Int
+  status           AssignmentStatus @default(TAKEN)
+  taken_at         DateTime?
+  confirmed_at     DateTime?
+  failed_at        DateTime?
+  completed_at     DateTime?
+  updated_at       DateTime         @updatedAt
+
+  helpRequest      HelpRequest      @relation(fields: [help_request_id], references: [id])
+  helper           User             @relation(fields: [helper_id], references: [id])
+}
+
+model Message {
+  id               Int         @id @default(autoincrement())
+  help_request_id  Int
+  sender_id        Int
+  message          String
+  created_at       DateTime    @default(now())
+
+  helpRequest      HelpRequest @relation(fields: [help_request_id], references: [id])
+  sender           User        @relation(fields: [sender_id], references: [id])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  user_id     Int
+  title       String           @db.VarChar(200)
+  body        String
+  type        NotificationType
+  is_read     Boolean          @default(false)
+  created_at  DateTime         @default(now())
+
+  user        User             @relation(fields: [user_id], references: [id])
+}
+
+model Mission {
+  id              Int             @id @default(autoincrement())
+  code            String          @unique @db.VarChar(50)
+  title           String          @db.VarChar(200)
+  description     String
+  category        MissionCategory
+  target_value    Int
+  reward_points   Int
+  reward_badge_id Int
+  auto_complete   Boolean         @default(true)
+
+  rewardBadge     Badge           @relation("MissionRewardBadge", fields: [reward_badge_id], references: [id])
+  userMissions    UserMission[]
+}
+
+model UserMission {
+  id             Int        @id @default(autoincrement())
+  user_id        Int
+  mission_id     Int
+  progress_value Int        @default(0)
+  is_completed   Boolean    @default(false)
+  completed_at   DateTime?
+
+  user           User       @relation(fields: [user_id], references: [id])
+  mission        Mission    @relation(fields: [mission_id], references: [id])
+}
+
+model Badge {
+  id               Int         @id @default(autoincrement())
+  name             String      @db.VarChar(100)
+  icon_url         String
+  tier             String       @db.VarChar(50)
+
+  userBadges       UserBadge[]
+  rewardedMissions Mission[]    @relation("MissionRewardBadge")
+}
+
+model UserBadge {
+  id         Int         @id @default(autoincrement())
+  user_id    Int
+  badge_id   Int
+  awarded_at DateTime    @default(now())
+
+  user       User        @relation(fields: [user_id], references: [id])
+  badge      Badge       @relation(fields: [badge_id], references: [id])
+}
+
+model Report {
+  id               Int            @id @default(autoincrement())
+  reporter_id      Int
+  reported_user_id Int
+  help_request_id  Int?
+  reason           String
+  status           ReportStatus   @default(PENDING)
+  created_at       DateTime       @default(now())
+
+  reporter         User           @relation("ReportsByUser", fields: [reporter_id], references: [id])
+  reportedUser     User           @relation("ReportsToUser", fields: [reported_user_id], references: [id])
+  helpRequest      HelpRequest?   @relation(fields: [help_request_id], references: [id])
+}
+
+model AuditLog {
+  id         Int       @id @default(autoincrement())
+  admin_id   Int
+  action     String     @db.VarChar(200)
+  metadata   String?
+  created_at DateTime   @default(now())
+
+  admin      User       @relation(fields: [admin_id], references: [id])
+}
+
+model EmailToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  otp       String
+  type      TokenType
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+}
