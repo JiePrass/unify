@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const { generateOtp } = require('../utils/otp');
 const { generateToken } = require('../utils/token');
 const crypto = require('crypto');
-const mailer = require('../utils/mailer');
+const mailer = require('../lib/mailer');
 const axios = require("axios");
 
 exports.register = async (data) => {

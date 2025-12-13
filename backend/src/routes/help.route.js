@@ -2,50 +2,51 @@ const express = require("express");
 const router = express.Router();
 const requireLogin = require("../middlewares/requireLogin");
 const helpController = require("../controllers/help.controller");
+router.use(requireLogin);
 
 // =======================================
 // HELP REQUEST — MEMINTA BANTUAN
 // =======================================
 
 // Membuat bantuan
-router.post("/", requireLogin, helpController.createHelpRequest);
+router.post("/", helpController.createHelpRequest);
 
 // Mendapatkan bantuan terdekat
-router.get("/nearby", requireLogin, helpController.getNearbyHelpRequests);
+router.get("/nearby", helpController.getNearbyHelpRequests);
 
 // Detail bantuan
-router.get("/:id", requireLogin, helpController.getHelpRequestById);
+router.get("/:id", helpController.getHelpRequestById);
 
 // Menghapus bantuan (soft delete)
-router.delete("/:id", requireLogin, helpController.deleteHelpRequest);
+router.delete("/:id", helpController.deleteHelpRequest);
 
 // =======================================
 // HELP ASSIGNMENT — RELAWAN MENGAMBIL / DIKONFIRMASI
 // =======================================
 
 // Relawan mengambil bantuan
-router.post("/:id/take", requireLogin, helpController.takeHelpRequest);
+router.post("/:id/take", helpController.takeHelpRequest);
 
 // Peminta bantuan mengonfirmasi relawan tertentu
-router.post("/:id/confirm", requireLogin, helpController.confirmHelper);
+router.post("/:id/confirm", helpController.confirmHelper);
 
 // Membatalkan bantuan (oleh user atau relawan tertentu)
-router.post("/:id/cancel", requireLogin, helpController.cancelHelpRequest);
+router.post("/:id/cancel", helpController.cancelHelpRequest);
 
 // =======================================
 // HELP STATUS — STATUS AKHIR
 // =======================================
 
 // Relawan menandai selesai
-router.post("/assignment/:assignmentId/complete", requireLogin, helpController.markCompleted);
+router.post("/assignment/:assignmentId/complete", helpController.markCompleted);
 
 // Relawan menandai gagal
-router.post("/assignment/:assignmentId/failed", requireLogin, helpController.markFailed);
+router.post("/assignment/:assignmentId/failed", helpController.markFailed);
 
 // Admin/automated — timeout sebelum diambil
-router.post("/:id/force-timeout", requireLogin, helpController.forceTimeout);
+router.post("/:id/force-timeout", helpController.forceTimeout);
 
 // Admin/automated — timeout setelah grace period
-router.post("/:id/force-grace-cancel", requireLogin, helpController.forceGraceCancel);
+router.post("/:id/force-grace-cancel", helpController.forceGraceCancel);
 
 module.exports = router;

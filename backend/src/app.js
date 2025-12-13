@@ -42,6 +42,7 @@ app.use('/uploads', express.static('uploads'));
 // ----------------------------------------------------
 app.use('/auth', require('./routes/auth.route'));
 app.use('/help', require('./routes/help.route'));
+app.use('/profile', require('./routes/profile.route'));
 app.use('/notifications', require('./routes/notification.route'));
 
 // ----------------------------------------------------

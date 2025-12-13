@@ -1,9 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-/**
- * Membuat notifikasi generik.
- */
 exports.createNotification = async (userId, title, message, type, refId = null) => {
     return prisma.notification.create({
         data: {
@@ -16,9 +13,6 @@ exports.createNotification = async (userId, title, message, type, refId = null) 
     });
 };
 
-/**
- * Notif ketika bantuan diambil relawan
- */
 exports.notifyHelpTaken = async (requesterId, helpRequestId) => {
     return prisma.notification.create({
         data: {
@@ -31,9 +25,6 @@ exports.notifyHelpTaken = async (requesterId, helpRequestId) => {
     });
 };
 
-/**
- * Notif ketika misi selesai
- */
 exports.notifyMissionComplete = async (userId, missionId) => {
     return prisma.notification.create({
         data: {
@@ -46,9 +37,6 @@ exports.notifyMissionComplete = async (userId, missionId) => {
     });
 };
 
-/**
- * Notif badge baru
- */
 exports.notifyNewBadge = async (userId, badgeId) => {
     return prisma.notification.create({
         data: {
@@ -61,9 +49,6 @@ exports.notifyNewBadge = async (userId, badgeId) => {
     });
 };
 
-/**
- * Semua notifikasi user
- */
 exports.getUserNotifications = async (userId) => {
     return prisma.notification.findMany({
         where: { userId },
@@ -71,18 +56,12 @@ exports.getUserNotifications = async (userId) => {
     });
 };
 
-/**
- * Menghitung jumlah notif yang belum dibaca
- */
 exports.countUnreadNotifications = async (userId) => {
     return prisma.notification.count({
         where: { userId, isRead: false }
     });
 };
 
-/**
- * Tandai satu notif sebagai read
- */
 exports.markAsRead = async (id, userId) => {
     return prisma.notification.updateMany({
         where: { id, userId },
@@ -90,9 +69,6 @@ exports.markAsRead = async (id, userId) => {
     });
 };
 
-/**
- * Tandai semua notif sebagai read
- */
 exports.markAllAsRead = async (userId) => {
     return prisma.notification.updateMany({
         where: { userId, isRead: false },
@@ -100,18 +76,12 @@ exports.markAllAsRead = async (userId) => {
     });
 };
 
-/**
- * Hapus notif tertentu
- */
 exports.deleteNotification = async (id, userId) => {
     return prisma.notification.deleteMany({
         where: { id, userId }
     });
 };
 
-/**
- * Hapus otomatis notif read lebih dari 7 hari
- */
 exports.deleteOldReadNotifications = async () => {
     const threshold = new Date();
     threshold.setDate(threshold.getDate() - 7);
