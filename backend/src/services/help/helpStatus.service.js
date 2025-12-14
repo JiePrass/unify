@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const missionService = require('../missions/missions.service');
 
 exports.markCompleted = async (assignmentId) => {
     const assignment = await prisma.helpAssignment.update({
@@ -14,6 +15,13 @@ exports.markCompleted = async (assignmentId) => {
         where: { id: assignment.help_request_id },
         data: { status: "COMPLETED" }
     });
+
+    // bantuan selesai => reward
+    await missionService.updateMissionProgress(
+        assignment.helper_id,
+        'HELP_COMPLETED',
+        1
+    );
 
     return assignment;
 };

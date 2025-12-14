@@ -1,11 +1,12 @@
 const { PrismaClient, TokenType } = require('@prisma/client');
 const prisma = new PrismaClient();
+const axios = require("axios");
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { generateOtp } = require('../utils/otp');
 const { generateToken } = require('../utils/token');
-const crypto = require('crypto');
 const mailer = require('../lib/mailer');
-const axios = require("axios");
+const missionService = require('./missions/missions.service');
 
 exports.register = async (data) => {
     const { full_name, email, phone, password } = data;
@@ -23,6 +24,9 @@ exports.register = async (data) => {
             password: hashedPassword
         }
     });
+
+    // ASSIGN SEMUA MISI KE USER BARU
+    await missionService.assignMissionsToUser(user.id);
 
     const otp = generateOtp();
 
@@ -84,6 +88,9 @@ exports.login = async ({ email, password }) => {
     const valid = await bcrypt.compare(password, user.password);
 
     if (!valid) throw new Error('Email atau password salah.');
+
+    // SYNC MISI (AMAN, TIDAK DUPLIKAT)
+    await missionService.assignMissionsToUser(user.id);
 
     const token = generateToken({
         id: user.id,

@@ -1,8 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const missionService = require('../missions/missions.service');
 
 exports.takeHelpRequest = async (helperId, helpRequestId) => {
-    // pastikan OPEN
     const help = await prisma.helpRequest.findUnique({
         where: { id: helpRequestId }
     });
@@ -11,7 +11,6 @@ exports.takeHelpRequest = async (helperId, helpRequestId) => {
         throw new Error("Bantuan tidak tersedia");
     }
 
-    // buat assignment
     const assignment = await prisma.helpAssignment.create({
         data: {
             helper_id: helperId,
@@ -20,11 +19,17 @@ exports.takeHelpRequest = async (helperId, helpRequestId) => {
         }
     });
 
-    // update status helpRequest → TAKEN
     await prisma.helpRequest.update({
         where: { id: helpRequestId },
         data: { status: "TAKEN" }
     });
+
+    // ambil bantuan
+    await missionService.updateMissionProgress(
+        helperId,
+        'HELP_TAKEN',
+        1
+    );
 
     return assignment;
 };

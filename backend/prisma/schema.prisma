@@ -147,10 +147,10 @@ model Mission {
   category        MissionCategory
   target_value    Int
   reward_points   Int
-  reward_badge_id Int
+  reward_badge_id Int?
   auto_complete   Boolean         @default(true)
 
-  rewardBadge     Badge           @relation("MissionRewardBadge", fields: [reward_badge_id], references: [id])
+  rewardBadge     Badge?          @relation("MissionRewardBadge", fields: [reward_badge_id], references: [id])
   userMissions    UserMission[]
 }
 
