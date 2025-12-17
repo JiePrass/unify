@@ -29,7 +29,7 @@ router.delete("/:id", helpController.deleteHelpRequest);
 router.post("/:id/take", helpController.takeHelpRequest);
 
 // Peminta bantuan mengonfirmasi relawan tertentu
-router.post("/:id/confirm", helpController.confirmHelper);
+router.post("/:id/confirm/:assignmentId", helpController.confirmHelper);
 
 // Membatalkan bantuan (oleh user atau relawan tertentu)
 router.post("/:id/cancel", helpController.cancelHelpRequest);

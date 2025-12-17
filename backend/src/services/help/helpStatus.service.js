@@ -2,29 +2,56 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const missionService = require('../missions/missions.service');
 
-exports.markCompleted = async (assignmentId) => {
-    const assignment = await prisma.helpAssignment.update({
-        where: { id: assignmentId },
-        data: {
-            status: "COMPLETED",
-            completed_at: new Date()
+exports.markCompleted = async (assignmentId, helperId) => {
+    return prisma.$transaction(async (tx) => {
+
+        const assignment = await tx.helpAssignment.findUnique({
+            where: { id: assignmentId },
+            include: {
+                helpRequest: true,
+            },
+        });
+
+        if (!assignment) {
+            throw { status: 404, message: 'Assignment tidak ditemukan' };
         }
+
+        if (assignment.helper_id !== helperId) {
+            throw { status: 403, message: 'Akses ditolak' };
+        }
+
+        if (assignment.status !== 'CONFIRMED' && assignment.helpRequest.status !== 'IN_PROGRESS') {
+            throw {
+                status: 409,
+                message: 'Bantuan belum atau sudah diselesaikan',
+            };
+        }
+
+        await tx.helpAssignment.update({
+            where: { id: assignmentId },
+            data: {
+                status: 'COMPLETED',
+                completed_at: new Date(),
+            },
+        });
+
+        await tx.helpRequest.update({
+            where: { id: assignment.help_request_id },
+            data: { status: 'COMPLETED' },
+        });
+
+        // reward → helper
+        await missionService.updateMissionProgress(
+            helperId,
+            'HELP_COMPLETED',
+            1,
+            tx
+        );
+
+        return { success: true };
     });
-
-    await prisma.helpRequest.update({
-        where: { id: assignment.help_request_id },
-        data: { status: "COMPLETED" }
-    });
-
-    // bantuan selesai => reward
-    await missionService.updateMissionProgress(
-        assignment.helper_id,
-        'HELP_COMPLETED',
-        1
-    );
-
-    return assignment;
 };
+
 
 exports.markFailed = async (assignmentId) => {
     const assignment = await prisma.helpAssignment.update({

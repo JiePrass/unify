@@ -54,7 +54,12 @@ exports.assignMissionsToUser = async (userId) => {
 exports.updateMissionProgress = async (userId, event, increment = 1) => {
     const EVENT_MISSION_MAP = {
         HELP_TAKEN: ['HELP_TAKEN'],
-        HELP_COMPLETED: ['HELP_COMPLETE'],
+        HELP_COMPLETED: ['HELP_COMPLETED'],
+        HELP_REQUEST: ['HELP_REQUEST'],
+
+        LOGIN_STREAK: ['LOGIN_STREAK'],
+
+        PROFILE_COMPLETED: ['PROFILE_COMPLETED'],
     }
 
     const missionCodes = EVENT_MISSION_MAP[event]
@@ -126,12 +131,14 @@ const completeMission = async (userId, mission, userMissionId) => {
             },
         })
 
-        await tx.userBadge.create({
-            data: {
-                user_id: userId,
-                badge_id: mission.reward_badge_id,
-            },
-        })
+        if (mission.reward_badge_id) {
+            await tx.userBadge.create({
+                data: {
+                    user_id: userId,
+                    badge_id: mission.reward_badge_id,
+                },
+            })
+        }
 
         await tx.notification.create({
             data: {

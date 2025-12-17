@@ -19,12 +19,22 @@ exports.takeHelpRequest = async (req, res) => {
 exports.confirmHelper = async (req, res) => {
     try {
         const helpRequestId = Number(req.params.id);
-        const assignmentId = Number(req.body.assignmentId);
+        const assignmentId = Number(req.params.assignmentId);
+        const requesterId = req.user.id;
 
-        const updated = await helpAssignmentService.confirmHelper(helpRequestId, assignmentId);
-        return res.json({ success: true, data: updated });
+        const result = await helpAssignmentService.confirmHelper(
+            helpRequestId,
+            assignmentId,
+            requesterId
+        );
+
+        return res.json({ success: true, data: result });
     } catch (err) {
-        return res.status(400).json({ success: false, message: err.message });
+        const status = err.status || 400;
+        return res.status(status).json({
+            success: false,
+            message: err.message,
+        });
     }
 };
 
@@ -105,13 +115,22 @@ exports.deleteHelpRequest = async (req, res) => {
 exports.markCompleted = async (req, res) => {
     try {
         const assignmentId = Number(req.params.assignmentId);
+        const helperId = req.user.id; // ← WAJIB
 
-        const result = await helpStatusService.markCompleted(assignmentId);
+        const result = await helpStatusService.markCompleted(
+            assignmentId,
+            helperId
+        );
+
         return res.json({ success: true, data: result });
     } catch (err) {
-        return res.status(400).json({ success: false, message: err.message });
+        const status = err.status || 400;
+        return res
+            .status(status)
+            .json({ success: false, message: err.message });
     }
 };
+
 
 exports.markFailed = async (req, res) => {
     try {

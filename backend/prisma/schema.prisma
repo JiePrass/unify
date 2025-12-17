@@ -100,7 +100,7 @@ model HelpRequest {
   messages         Message[]
   reports          Report[]
 }
-
+  
 model HelpAssignment {
   id               Int              @id @default(autoincrement())
   help_request_id  Int
