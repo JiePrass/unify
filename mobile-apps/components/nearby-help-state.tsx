@@ -43,18 +43,18 @@ export function NearbyHelpState({ type }: Props) {
                 ]}
             >
                 <Ionicons
-                    name="infinite-outline"
+                    name="hand-left-outline"
                     size={28}
                     color={colors.icon}
                 />
             </View>
 
             <ThemedText type="defaultSemiBold" style={styles.title}>
-                Belum Ada Bantuan
+                Belum Ada Permintaan Bantuan
             </ThemedText>
 
-            <ThemedText type="subtitle" style={styles.subtitle}>
-                Saat ini belum ada bantuan di sekitarmu
+            <ThemedText style={styles.subtitle}>
+                Saat ini belum ada permintaan bantuan di sekitarmu
             </ThemedText>
         </View>
     );
@@ -77,10 +77,12 @@ const styles = StyleSheet.create({
     },
     title: {
         textAlign: "center",
+        fontSize: 16,
     },
     subtitle: {
         textAlign: "center",
         marginTop: 4,
         opacity: 0.8,
+        fontSize: 14,
     },
 });

@@ -3,55 +3,59 @@ import { Platform } from "react-native";
 export const Colors = {
   light: {
     text: "#11181C",
-    subText: "#687076",
-    background: "#fefefe",
-    tint: "#0a7ea4",
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: "#fff",
+    subText: "#5C6369",
+    background: "#FFFFFF",
 
-    // Updated primary & secondary
-    primary: "#A9C7FF",
-    secondary: "#7FAAF5",
+    // BRIGHT SOFT ORANGE
+    primary: "#FFBE7D",        // cerah tapi tidak tajam
+    secondary: "#FFE1BC",      // background accent
+    tint: "#FF9A3C",           // active / CTA (lebih hidup)
 
-    border: "#CCCCCC",
-    card: "#fafafa",
-    placeholder: "#888888",
+    icon: "#5C6369",
+    tabIconDefault: "#5C6369",
+    tabIconSelected: "#FFFFFF",
+
+    border: "#E2E2E2",
+    card: "#FAFAFA",
+    placeholder: "#8A8A8A",
     inputBackground: "#FFFFFF",
-    error: "#E63946",
-    success: "#27AE60",
-    warning: "#F2C94C",
-    disabled: "#E0E0E0",
-    buttonTextPrimary: "#2b2b2b",
+
+    error: "#E76F51",
+    success: "#2A9D8F",
+    warning: "#E9C46A",
+    disabled: "#EEEEEE",
+
+    buttonTextPrimary: "#2A2A2A",
   },
+
 
   dark: {
     text: "#ECEDEE",
-    subText: "#A1A8AD",
-    background: "#1e1e1e",
-    tint: "#0a7ea4",
+    subText: "#AEB4B9",
+    background: "#1E1E1E",
+
+    primary: "#FFCAA0",
+    secondary: "#EFB97F",
+    tint: "#FFB26B",
+
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: "#fff",
+    tabIconSelected: "#FFFFFF",
 
-    border: "#333333",
+    border: "#2E2E2E",
     card: "#252525",
-    placeholder: "#AAAAAA",
+    placeholder: "#9FA3A7",
     inputBackground: "#2A2A2A",
-    error: "#E57373",
+
+    error: "#F28482",
     success: "#6FCF97",
-    warning: "#F2C94C",
+    warning: "#E9C46A",
     disabled: "#555555",
 
-    // Keep your existing dark palette
-    primary: "#5EABD6",
-    secondary: "#345366",
-
-    buttonTextPrimary: "#FFFFFF",
+    buttonTextPrimary: "#1F1F1F",
   },
 };
 
-// SF Pro font usage
 export const Fonts = Platform.select({
   ios: {
     sans: "SF Pro Text",

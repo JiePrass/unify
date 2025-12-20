@@ -1,112 +1,182 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Image } from "expo-image";
+import { ScrollView, View, StyleSheet, ActivityIndicator, Pressable } from "react-native";
+import { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
-export default function TabTwoScreen() {
+import { getUserProfile, getUserStats } from "@/lib/api/profile";
+
+export default function ProfileScreen() {
+    const background = useThemeColor({}, "background");
+    const card = useThemeColor({}, "card");
+    const icon = useThemeColor({}, "icon");
+
+    const [user, setUser] = useState<any>(null);
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [profileRes, statsRes] = await Promise.all([
+                    getUserProfile(),
+                    getUserStats(),
+                ]);
+
+                setUser(profileRes);
+                setStats(statsRes);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <View style={[styles.center, { backgroundColor: background }]}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
+
     return (
-        <ParallaxScrollView
-            headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-            headerImage={
-                <IconSymbol
-                    size={310}
-                    color="#808080"
-                    name="chevron.left.forwardslash.chevron.right"
-                    style={styles.headerImage}
-                />
-            }>
-            <ThemedView style={styles.titleContainer}>
-                <ThemedText
-                    type="title"
-                    style={{
-                        fontFamily: Fonts.rounded,
-                    }}>
-                    Explore
-                </ThemedText>
-            </ThemedView>
-            <ThemedText>This app includes example code to help you get started.</ThemedText>
-            <Collapsible title="File-based routing">
-                <ThemedText>
-                    This app has two screens:{' '}
-                    <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-                    <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-                </ThemedText>
-                <ThemedText>
-                    The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-                    sets up the tab navigator.
-                </ThemedText>
-                <ExternalLink href="https://docs.expo.dev/router/introduction">
-                    <ThemedText type="link">Learn more</ThemedText>
-                </ExternalLink>
-            </Collapsible>
-            <Collapsible title="Android, iOS, and web support">
-                <ThemedText>
-                    You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-                    <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-                </ThemedText>
-            </Collapsible>
-            <Collapsible title="Images">
-                <ThemedText>
-                    For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-                    <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-                    different screen densities
-                </ThemedText>
+        <ScrollView style={{ backgroundColor: background }}>
+            {/* Header */}
+            <View style={styles.header}>
                 <Image
-                    source={require('@/assets/images/react-logo.png')}
-                    style={{ width: 100, height: 100, alignSelf: 'center' }}
+                    source={
+                        user?.avatar_url
+                            ? { uri: user.avatar_url }
+                            : require("@/assets/icons/avatar-placeholder.png")
+                    }
+                    style={styles.cover}
                 />
-                <ExternalLink href="https://reactnative.dev/docs/images">
-                    <ThemedText type="link">Learn more</ThemedText>
-                </ExternalLink>
-            </Collapsible>
-            <Collapsible title="Light and dark mode components">
-                <ThemedText>
-                    This template has light and dark mode support. The{' '}
-                    <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-                    what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-                </ThemedText>
-                <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-                    <ThemedText type="link">Learn more</ThemedText>
-                </ExternalLink>
-            </Collapsible>
-            <Collapsible title="Animations">
-                <ThemedText>
-                    This template includes an example of an animated component. The{' '}
-                    <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-                    the powerful{' '}
-                    <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-                        react-native-reanimated
-                    </ThemedText>{' '}
-                    library to create a waving hand animation.
-                </ThemedText>
-                {Platform.select({
-                    ios: (
-                        <ThemedText>
-                            The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-                            component provides a parallax effect for the header image.
-                        </ThemedText>
-                    ),
-                })}
-            </Collapsible>
-        </ParallaxScrollView>
+
+                {/* Avatar */}
+                <View style={styles.avatarWrapper}>
+                    <Image
+                        source={
+                            user?.avatar_url
+                                ? { uri: user.avatar_url }
+                                : require("@/assets/icons/avatar-placeholder.png")
+                        }
+                        style={styles.avatar}
+                    />
+                </View>
+            </View>
+
+            {/* Settings Button */}
+            <Pressable
+                onPress={() => router.push("/")}
+                style={[styles.settingsButton, { backgroundColor: card }]}
+                hitSlop={10}
+            >
+                <Ionicons name="settings-outline" size={22} style={{ color: icon }} />
+            </Pressable>
+
+            {/* Info */}
+            <ThemedView style={styles.infoCard}>
+
+                <ThemedText type="title">{user.full_name}</ThemedText>
+
+                <View style={styles.subRow}>
+                    <ThemedText type="subtitle" style={styles.textSub}>{user.email}</ThemedText>
+                </View>
+
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                    <StatItem label="Bantuan Diminta" value={stats.help_created} />
+                    <StatItem label="Bantuan Selesai" value={stats.help_completed} />
+                    <StatItem label="Bantuan Diberikan" value={stats.help_helped} />
+                </View>
+            </ThemedView>
+        </ScrollView>
+    );
+}
+
+function StatItem({ label, value }: { label: string; value: number }) {
+    return (
+        <View style={styles.statItem}>
+            <ThemedText style={styles.statsValue}>{value}</ThemedText>
+            <ThemedText style={styles.statsLabel}>{label}</ThemedText>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    headerImage: {
-        color: '#808080',
-        bottom: -90,
-        left: -35,
-        position: 'absolute',
+    center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
-    titleContainer: {
-        flexDirection: 'row',
+    header: {
+        height: 200,
+    },
+    cover: {
+        width: "100%",
+        height: "100%",
+    },
+    avatarWrapper: {
+        position: "absolute",
+        bottom: -50,
+        alignSelf: "center",
+        padding: 4,
+        borderRadius: 60,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+    },
+    settingsButton: {
+        position: "absolute",
+        right: 24,
+        top: 210,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    infoCard: {
+        marginTop: 60,
+        marginHorizontal: 16,
+        borderRadius: 20,
+        padding: 16,
+        alignItems: "center",
+    },
+    subRow: {
+        flexDirection: "row",
+        alignItems: "center",
         gap: 8,
+        marginTop: 4,
+    },
+    textSub: {
+        fontSize: 14,
+        opacity: 0.8,
+    },
+    statsRow: {
+        flexDirection: "row",
+        marginTop: 32,
+        width: "100%",
+    },
+    statItem: {
+        flex: 1,
+        alignItems: "center",
+        gap: 6,
+    },
+    statsValue: {
+        fontSize: 20,
+        fontWeight: "600",
+    },
+    statsLabel: {
+        fontSize: 14,
+        opacity: 0.8,
     },
 });

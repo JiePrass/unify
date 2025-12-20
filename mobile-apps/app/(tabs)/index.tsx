@@ -3,15 +3,13 @@ import {
   StyleSheet,
   View,
   TouchableOpacity,
-  useColorScheme,
   FlatList,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
-import { Colors } from '@/constants/theme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
@@ -19,6 +17,7 @@ import { getNearbyHelpRequests } from '@/lib/api/help';
 import { HelpCard } from '@/components/card/help-card';
 import { calculateDistanceKm } from "@/lib/utils/calculate-distance";
 import { NearbyHelpState } from "@/components/nearby-help-state";
+import QuickAction from '@/components/quick-action-button';
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
@@ -31,9 +30,9 @@ export default function HomeScreen() {
     return 'Selamat Malam';
   }, []);
 
-  const colorScheme = useColorScheme() ?? 'light';
-  const colors = Colors[colorScheme];
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const background = useThemeColor({}, 'background');
+  const card = useThemeColor({}, 'card');
+  const icon = useThemeColor({}, 'icon');
 
   const [nearbyHelps, setNearbyHelps] = useState<any[]>([]);
   const [loadingHelp, setLoadingHelp] = useState(true);
@@ -90,7 +89,7 @@ export default function HomeScreen() {
   if (loading) return null;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: background }}>
       {/* ================= Header ================= */}
       <ThemedView style={styles.header}>
         <View style={styles.headerLeft}>
@@ -105,19 +104,19 @@ export default function HomeScreen() {
 
           <View>
             <ThemedText type="defaultSemiBold">
-              Hi, {user?.full_name ?? 'User'} 👋
+              Hi, {user?.full_name ?? 'User'}
             </ThemedText>
-            <ThemedText type="subtitle">
-              {greeting}
-            </ThemedText>
+            <ThemedText type="subtitle">{greeting}</ThemedText>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.notificationButton}>
+        <TouchableOpacity
+          style={[styles.notificationButton, { backgroundColor: card }]}
+        >
           <Ionicons
             name="notifications-outline"
             size={22}
-            color={colors.icon}
+            color={icon}
           />
         </TouchableOpacity>
       </ThemedView>
@@ -132,9 +131,14 @@ export default function HomeScreen() {
 
       {/* ================= Bantuan Terdekat ================= */}
       <ThemedView style={{ paddingHorizontal: 16, marginTop: 20, flex: 1 }}>
-        <ThemedText type="defaultSemiBold">
-          Bantuan Terdekat
-        </ThemedText>
+        <View style={styles.contentHeader}>
+          <ThemedText type="defaultSemiBold">
+            Bantuan Terdekat
+          </ThemedText>
+          <ThemedText style={styles.link}>
+            Lihat Semua
+          </ThemedText>
+        </View>
 
         {loadingHelp && <NearbyHelpState type="loading" />}
 
@@ -182,90 +186,49 @@ export default function HomeScreen() {
   );
 }
 
-/* ================= Reusable Quick Action ================= */
-function QuickAction({
-  icon,
-  label,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-}) {
-  const scheme = useColorScheme() ?? 'light';
-  const colors = Colors[scheme];
-
-  return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
-      <TouchableOpacity
-        style={[
-          stylesStatic.quickActionCircle,
-          { backgroundColor: colors.card, borderColor: colors.border },
-        ]}
-      >
-        <Ionicons name={icon} size={22} color={colors.icon} />
-      </TouchableOpacity>
-      <ThemedText
-        style={{
-          marginTop: 6,
-          fontSize: 12,
-          textAlign: 'center',
-          color: colors.subText,
-        }}
-        numberOfLines={2}
-      >
-        {label}
-      </ThemedText>
-    </View>
-  );
-}
-
-/* ================= Styles ================= */
-const stylesStatic = StyleSheet.create({
-  quickActionCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
+  quickActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    gap: 8,
+  },
+  content: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+    flex: 1,
+  },
+  contentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  link: {
+    fontSize: 14,
+  }
 });
 
-const createStyles = (colors: typeof Colors.light) =>
-  StyleSheet.create({
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-    },
-    notificationButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.card,
-    },
-    quickActions: {
-      flexDirection: 'row',
-      paddingHorizontal: 16,
-      marginTop: 12,
-      gap: 8,
-    },
-    section: {
-      flex: 1,
-      paddingHorizontal: 16,
-      marginTop: 20,
-    },
-  });

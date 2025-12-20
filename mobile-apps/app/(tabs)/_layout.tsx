@@ -34,7 +34,8 @@ export default function TabLayout() {
           height: 88,
           paddingBottom: 8,
           paddingTop: 8,
-          borderRadius: 24,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
 
           backgroundColor: colors.card,
           position: 'absolute',

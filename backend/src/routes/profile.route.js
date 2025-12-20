@@ -10,6 +10,5 @@ router.put('/me', upload.single('avatar'), profileController.updateMyProfile)
 
 router.get('/me/stats', profileController.getMyStats)
 router.get('/me/badges', profileController.getMyBadges)
-router.get('/me/missions', profileController.getMyMissions)
 
 module.exports = router
