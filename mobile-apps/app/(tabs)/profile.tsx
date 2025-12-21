@@ -73,7 +73,7 @@ export default function ProfileScreen() {
 
             {/* Settings Button */}
             <Pressable
-                onPress={() => router.push("/")}
+                onPress={() => router.push("/settings")}
                 style={[styles.settingsButton, { backgroundColor: card }]}
                 hitSlop={10}
             >

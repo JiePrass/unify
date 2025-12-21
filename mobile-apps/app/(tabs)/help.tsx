@@ -80,8 +80,6 @@ export default function HelpScreen() {
         })();
     }, []);
 
-    console.log(activeHelp.help)
-
     return (
         <SafeAreaView
             style={[styles.container, { backgroundColor: background }]}

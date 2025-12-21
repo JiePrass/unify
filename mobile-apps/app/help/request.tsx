@@ -16,6 +16,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import HelpCategoryModal from "@/components/modals/help-category-modal";
 import { createHelpRequest } from "@/lib/api/help";
 import { ThemedText } from "@/components/themed-text";
+import HeaderScreen from "@/components/header-screen";
 
 type UserLocation = {
     latitude: number;
@@ -127,15 +128,7 @@ export default function CreateHelpScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: background }]}>
             {/* HEADER */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={24} color={text} />
-                </TouchableOpacity>
-                <ThemedText style={[styles.headerTitle, { color: text }]}>
-                    Meminta Bantuan
-                </ThemedText>
-                <View style={{ width: 24 }} />
-            </View>
+            <HeaderScreen title="Minta Bantuan" />
 
             {/* MAP */}
             <View style={styles.mapWrapper}>
@@ -253,17 +246,6 @@ export default function CreateHelpScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        height: 56,
-        justifyContent: "space-between",
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: "600",
-    },
     mapWrapper: {
         height: 220,
         width: "100%",
