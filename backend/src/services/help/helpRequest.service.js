@@ -81,6 +81,75 @@ exports.getHelpRequestById = async (id) => {
     return prisma.helpRequest.findUnique({ where: { id } });
 };
 
+// GET ACTIVE HELP REQUEST BY USER
+exports.getActiveHelpByUser = async (userId) => {
+    const ACTIVE_HELP_STATUSES = ['OPEN', 'TAKEN', 'IN_PROGRESS'];
+    const ACTIVE_ASSIGNMENT_STATUSES = ['TAKEN', 'CONFIRMED'];
+
+    const asRequester = await prisma.helpRequest.findFirst({
+        where: {
+            user_id: userId,
+            status: { in: ACTIVE_HELP_STATUSES },
+        },
+        include: {
+            assignments: {
+                where: {
+                    status: { in: ACTIVE_ASSIGNMENT_STATUSES },
+                },
+                include: {
+                    helper: {
+                        select: {
+                            id: true,
+                            full_name: true,
+                            avatar_url: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (asRequester) {
+        return {
+            role: 'REQUESTER',
+            help: asRequester,
+        };
+    }
+
+    const asHelper = await prisma.helpAssignment.findFirst({
+        where: {
+            helper_id: userId,
+            status: { in: ACTIVE_ASSIGNMENT_STATUSES },
+            helpRequest: {
+                status: { in: ACTIVE_HELP_STATUSES },
+            },
+        },
+        include: {
+            helpRequest: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            full_name: true,
+                            avatar_url: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (asHelper) {
+        return {
+            role: 'HELPER',
+            help: asHelper.helpRequest,
+            assignment_id: asHelper.id,
+        };
+    }
+
+    return null;
+};
+
 // SOFT DELETE
 exports.deleteHelpRequest = async (userId, helpId) => {
     return prisma.helpRequest.update({

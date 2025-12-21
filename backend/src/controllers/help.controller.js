@@ -95,6 +95,32 @@ exports.getHelpRequestById = async (req, res) => {
     }
 };
 
+exports.getMyActiveHelp = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const activeHelp = await helpRequestService.getActiveHelpByUser(userId);
+
+        if (!activeHelp) {
+            return res.json({
+                success: true,
+                data: null,
+            });
+        }
+
+        res.json({
+            success: true,
+            data: activeHelp,
+        });
+    } catch (error) {
+        console.error('getMyActiveHelp error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Gagal mengambil bantuan aktif',
+        });
+    }
+};
+
 exports.deleteHelpRequest = async (req, res) => {
     try {
         const userId = req.user.id;

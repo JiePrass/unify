@@ -15,6 +15,9 @@ router.post("/", helpController.createHelpRequest);
 // Mendapatkan bantuan terdekat
 router.get("/nearby", helpController.getNearbyHelpRequests);
 
+// Mendapatkan bantuan aktif milik user
+router.get("/active", helpController.getMyActiveHelp);
+
 // Detail bantuan
 router.get("/:id", helpController.getHelpRequestById);
 

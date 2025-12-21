@@ -69,6 +69,8 @@ export default function HomeScreen() {
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
 
+        console.log(latitude, longitude);
+
         const res = await getNearbyHelpRequests({
           latitude,
           longitude,
@@ -85,6 +87,7 @@ export default function HomeScreen() {
 
     fetchNearbyHelp();
   }, []);
+
 
   if (loading) return null;
 
