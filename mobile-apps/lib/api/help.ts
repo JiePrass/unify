@@ -36,8 +36,19 @@ export const getHelpRequestById = async (id: number | string): Promise<any> => {
 };
 
 // GET MY ACTIVE HELP REQUEST
-export const getMyActiveHelp = async (): Promise<any> => {
-    const res = await axiosInstance.get('/help/active');
+export const getMyActiveHelp = async (params: {
+    latitude: number;
+    longitude: number;
+    radius?: number;
+}): Promise<any> => {
+    const res = await axiosInstance.get('/help/active', {
+        params: {
+            latitude: params.latitude,
+            longitude: params.longitude,
+            radius: params.radius ?? 5000,
+        },
+    });
+
     return res.data;
 };
 

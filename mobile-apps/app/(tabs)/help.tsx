@@ -60,7 +60,11 @@ export default function HelpScreen() {
 
             try {
                 const [active, nearby] = await Promise.all([
-                    getMyActiveHelp(),
+                    getMyActiveHelp({
+                        latitude: coords.latitude,
+                        longitude: coords.longitude,
+                        radius: 5000,
+                    }),
                     getNearbyHelpRequests({
                         latitude: coords.latitude,
                         longitude: coords.longitude,
@@ -75,6 +79,8 @@ export default function HelpScreen() {
             }
         })();
     }, []);
+
+    console.log(activeHelp.help)
 
     return (
         <SafeAreaView
@@ -126,7 +132,7 @@ export default function HelpScreen() {
                             borderColor: border,
                         },
                     ]}
-                    onPress={() => router.push("/")}
+                    onPress={() => router.push("/help/request")}
                 >
                     <Ionicons
                         name="add"

@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const missionService = require('../missions/missions.service');
+const { calculateDistanceKm } = require('../../utils/calculateDistanceKm');
 
 // CREATE
 exports.createHelpRequest = async (userId, data) => {
@@ -53,27 +54,35 @@ exports.createHelpRequest = async (userId, data) => {
 exports.getNearbyHelpRequests = async (lat, lng, radius = 5000) => {
     const radiusKm = radius / 1000;
 
-    return prisma.$queryRaw`
-        SELECT *
-        FROM (
-            SELECT
-                hr.*,
-                (
-                    6371 * acos(
-                        cos(radians(${lat}))
-                        * cos(radians(hr.latitude))
-                        * cos(radians(hr.longitude) - radians(${lng}))
-                        + sin(radians(${lat}))
-                        * sin(radians(hr.latitude))
-                    )
-                ) AS distance_km
-            FROM "HelpRequest" hr
-            WHERE hr.status = 'OPEN'
-            AND hr.deleted_at IS NULL
-        ) sub
-        WHERE sub.distance_km <= ${radiusKm}
-        ORDER BY sub.distance_km ASC;
-    `;
+    const helps = await prisma.helpRequest.findMany({
+        where: {
+            status: 'OPEN',
+            deleted_at: null,
+        },
+    });
+
+    const result = helps
+        .map((help) => {
+            const distanceKm = calculateDistanceKm(
+                lat,
+                lng,
+                help.latitude,
+                help.longitude
+            );
+
+            return {
+                ...help,
+                distance_km: distanceKm,
+            };
+        })
+        .filter(
+            (help) =>
+                help.distance_km !== null &&
+                help.distance_km <= radiusKm
+        )
+        .sort((a, b) => a.distance_km - b.distance_km);
+
+    return result;
 };
 
 // DETAIL
@@ -82,10 +91,11 @@ exports.getHelpRequestById = async (id) => {
 };
 
 // GET ACTIVE HELP REQUEST BY USER
-exports.getActiveHelpByUser = async (userId) => {
+exports.getActiveHelpByUser = async (userId, lat = null, lng = null) => {
     const ACTIVE_HELP_STATUSES = ['OPEN', 'TAKEN', 'IN_PROGRESS'];
     const ACTIVE_ASSIGNMENT_STATUSES = ['TAKEN', 'CONFIRMED'];
 
+    // ========== REQUESTER ==========
     const asRequester = await prisma.helpRequest.findFirst({
         where: {
             user_id: userId,
@@ -93,9 +103,7 @@ exports.getActiveHelpByUser = async (userId) => {
         },
         include: {
             assignments: {
-                where: {
-                    status: { in: ACTIVE_ASSIGNMENT_STATUSES },
-                },
+                where: { status: { in: ACTIVE_ASSIGNMENT_STATUSES } },
                 include: {
                     helper: {
                         select: {
@@ -112,10 +120,21 @@ exports.getActiveHelpByUser = async (userId) => {
     if (asRequester) {
         return {
             role: 'REQUESTER',
-            help: asRequester,
+            help: {
+                ...asRequester,
+                distance_km: lat && lng
+                    ? calculateDistanceKm(
+                        lat,
+                        lng,
+                        asRequester.latitude,
+                        asRequester.longitude
+                    )
+                    : null,
+            },
         };
     }
 
+    // ========== HELPER ==========
     const asHelper = await prisma.helpAssignment.findFirst({
         where: {
             helper_id: userId,
@@ -140,10 +159,22 @@ exports.getActiveHelpByUser = async (userId) => {
     });
 
     if (asHelper) {
+        const help = asHelper.helpRequest;
+
         return {
             role: 'HELPER',
-            help: asHelper.helpRequest,
             assignment_id: asHelper.id,
+            help: {
+                ...help,
+                distance_km: lat && lng
+                    ? calculateDistanceKm(
+                        lat,
+                        lng,
+                        help.latitude,
+                        help.longitude
+                    )
+                    : null,
+            },
         };
     }
 

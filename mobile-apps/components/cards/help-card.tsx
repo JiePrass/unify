@@ -17,7 +17,7 @@ type HelpCardProps = {
 };
 
 export const getCategoryIcon = (category: string) => {
-    switch (category) {
+    switch (category.toLowerCase()) {
         case "fisik":
             return "body-outline";
         case "medis":

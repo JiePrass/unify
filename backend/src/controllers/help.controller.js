@@ -97,9 +97,13 @@ exports.getHelpRequestById = async (req, res) => {
 
 exports.getMyActiveHelp = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const { latitude, longitude } = req.query;
 
-        const activeHelp = await helpRequestService.getActiveHelpByUser(userId);
+        const activeHelp = await helpRequestService.getActiveHelpByUser(
+            req.user.id,
+            latitude ? Number(latitude) : null,
+            longitude ? Number(longitude) : null
+        );
 
         if (!activeHelp) {
             return res.json({
