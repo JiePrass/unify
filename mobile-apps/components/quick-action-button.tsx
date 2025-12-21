@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, useColorScheme, View, StyleSheet } from "react-native";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
 import { ThemedText } from "./themed-text";
-import { Colors } from "@/constants/theme";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function QuickAction({
     icon,
@@ -10,25 +10,27 @@ export default function QuickAction({
     icon: keyof typeof Ionicons.glyphMap;
     label: string;
 }) {
-    const scheme = useColorScheme() ?? 'light';
-    const colors = Colors[scheme];
+    const primary = useThemeColor({}, "primary");
+    const border = useThemeColor({}, "border");
+    const card = useThemeColor({}, "card");
+    const subText = useThemeColor({}, "subText");
 
     return (
         <View style={{ flex: 1, alignItems: 'center' }}>
             <TouchableOpacity
                 style={[
                     stylesStatic.quickActionCircle,
-                    { backgroundColor: colors.card, borderColor: colors.border },
+                    { backgroundColor: card, borderColor: border },
                 ]}
             >
-                <Ionicons name={icon} size={22} color={colors.icon} />
+                <Ionicons name={icon} size={22} color={primary} />
             </TouchableOpacity>
             <ThemedText
                 style={{
                     marginTop: 6,
                     fontSize: 12,
                     textAlign: 'center',
-                    color: colors.subText,
+                    color: subText,
                 }}
                 numberOfLines={2}
             >

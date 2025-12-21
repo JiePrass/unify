@@ -14,7 +14,7 @@ import { router } from "expo-router";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAuth } from "@/contexts/auth-context";
-import { MissionCard } from "@/components/card/mission-card";
+import { MissionCard } from "@/components/cards/mission-card";
 import { getUserMissions } from "@/lib/api/mission";
 
 export default function MissionScreen() {
@@ -92,7 +92,7 @@ export default function MissionScreen() {
             onPress={() => router.push("/")}
           >
             <Ionicons
-              name="ribbon-outline"
+              name="ribbon"
               size={32}
               color={primary}
             />
@@ -110,7 +110,7 @@ export default function MissionScreen() {
             onPress={() => router.push("/")}
           >
             <Ionicons
-              name="trophy-outline"
+              name="trophy"
               size={32}
               color={primary}
             />

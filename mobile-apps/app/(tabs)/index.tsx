@@ -14,10 +14,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { getNearbyHelpRequests } from '@/lib/api/help';
-import { HelpCard } from '@/components/card/help-card';
-import { calculateDistanceKm } from "@/lib/utils/calculate-distance";
+import { HelpCard } from '@/components/cards/help-card';
 import { NearbyHelpState } from "@/components/nearby-help-state";
 import QuickAction from '@/components/quick-action-button';
+import { router } from 'expo-router';
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
@@ -36,6 +36,7 @@ export default function HomeScreen() {
 
   const [nearbyHelps, setNearbyHelps] = useState<any[]>([]);
   const [loadingHelp, setLoadingHelp] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -68,8 +69,6 @@ export default function HomeScreen() {
 
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
-
-        console.log(latitude, longitude);
 
         const res = await getNearbyHelpRequests({
           latitude,
@@ -126,10 +125,10 @@ export default function HomeScreen() {
 
       {/* ================= Quick Actions ================= */}
       <ThemedView style={styles.quickActions}>
-        <QuickAction icon="hand-left-outline" label="Bantuan Aktif" />
-        <QuickAction icon="megaphone-outline" label="Minta Bantuan" />
-        <QuickAction icon="analytics-outline" label="Progress Misi" />
-        <QuickAction icon="time-outline" label="Riwayat" />
+        <QuickAction icon="hand-left" label="Bantuan Aktif" />
+        <QuickAction icon="megaphone" label="Minta Bantuan" />
+        <QuickAction icon="analytics" label="Progress Misi" />
+        <QuickAction icon="time" label="Riwayat" />
       </ThemedView>
 
       {/* ================= Bantuan Terdekat ================= */}
@@ -153,34 +152,19 @@ export default function HomeScreen() {
           <FlatList
             data={nearbyHelps}
             keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => {
-              const distance =
-                userLocation
-                  ? calculateDistanceKm(
-                    userLocation.latitude,
-                    userLocation.longitude,
-                    item.latitude,
-                    item.longitude
-                  )
-                  : null;
-
-              return (
-                <HelpCard
-                  data={{
-                    ...item,
-                    distance_km: distance ? distance.toFixed(1) : null,
-                  }}
-                  onPress={() => {
-                    console.log("Open help:", item.id);
-                  }}
-                />
-              );
-            }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingTop: 12,
-              paddingBottom: 24,
+              paddingVertical: 12,
+              flexGrow: nearbyHelps.length === 0 ? 1 : undefined,
             }}
+            renderItem={({ item }) => (
+              <HelpCard
+                data={item}
+                onPress={() =>
+                  router.push(`/`)
+                }
+              />
+            )}
           />
         )}
       </ThemedView>

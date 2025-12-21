@@ -35,6 +35,12 @@ export const getHelpRequestById = async (id: number | string): Promise<any> => {
     return res.data;
 };
 
+// GET MY ACTIVE HELP REQUEST
+export const getMyActiveHelp = async (): Promise<any> => {
+    const res = await axiosInstance.get('/help/active');
+    return res.data;
+};
+
 // DELETE HELP REQUEST (SOFT DELETE)
 export const deleteHelpRequest = async (id: number | string): Promise<any> => {
     const res = await axiosInstance.delete(`/help/${id}`);
