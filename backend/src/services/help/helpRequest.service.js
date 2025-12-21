@@ -54,33 +54,27 @@ exports.getNearbyHelpRequests = async (lat, lng, radius = 5000) => {
     const radiusKm = radius / 1000;
 
     return prisma.$queryRaw`
-        SELECT
-            *,
-            (
-                6371 * acos(
-                    cos(radians(${lat}))
-                    * cos(radians(latitude))
-                    * cos(radians(longitude) - radians(${lng}))
-                    + sin(radians(${lat}))
-                    * sin(radians(latitude))
-                )
-            ) AS distance_km
-        FROM "HelpRequest"
-        WHERE status = 'OPEN'
-        AND deleted_at IS NULL
-        HAVING (
-            6371 * acos(
-                cos(radians(${lat}))
-                * cos(radians(latitude))
-                * cos(radians(longitude) - radians(${lng}))
-                + sin(radians(${lat}))
-                * sin(radians(latitude))
-            )
-        ) <= ${radiusKm}
-        ORDER BY distance_km ASC;
+        SELECT *
+        FROM (
+            SELECT
+                hr.*,
+                (
+                    6371 * acos(
+                        cos(radians(${lat}))
+                        * cos(radians(hr.latitude))
+                        * cos(radians(hr.longitude) - radians(${lng}))
+                        + sin(radians(${lat}))
+                        * sin(radians(hr.latitude))
+                    )
+                ) AS distance_km
+            FROM "HelpRequest" hr
+            WHERE hr.status = 'OPEN'
+            AND hr.deleted_at IS NULL
+        ) sub
+        WHERE sub.distance_km <= ${radiusKm}
+        ORDER BY sub.distance_km ASC;
     `;
 };
-
 
 // DETAIL
 exports.getHelpRequestById = async (id) => {
