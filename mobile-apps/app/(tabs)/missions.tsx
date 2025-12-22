@@ -107,7 +107,7 @@ export default function MissionScreen() {
                 borderColor: border,
               },
             ]}
-            onPress={() => router.push("/")}
+            onPress={() => router.push("/leaderboard")}
           >
             <Ionicons
               name="trophy"

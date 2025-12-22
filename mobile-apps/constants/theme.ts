@@ -7,9 +7,9 @@ export const Colors = {
     background: "#FFFFFF",
 
     // BRIGHT SOFT ORANGE
-    primary: "#FFBE7D",        // cerah tapi tidak tajam
-    secondary: "#FFE1BC",      // background accent
-    tint: "#FF9A3C",           // active / CTA (lebih hidup)
+    primary: "#FFBE7D",
+    secondary: "#FFE1BC",
+    tint: "#FF9A3C",
 
     icon: "#5C6369",
     tabIconDefault: "#5C6369",
@@ -27,7 +27,6 @@ export const Colors = {
 
     buttonTextPrimary: "#2A2A2A",
   },
-
 
   dark: {
     text: "#ECEDEE",
