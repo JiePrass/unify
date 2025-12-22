@@ -86,8 +86,78 @@ exports.getNearbyHelpRequests = async (lat, lng, radius = 5000) => {
 };
 
 // DETAIL
-exports.getHelpRequestById = async (id) => {
-    return prisma.helpRequest.findUnique({ where: { id } });
+exports.getHelpRequestById = async (helpId, currentUserId) => {
+    const help = await prisma.helpRequest.findUnique({
+        where: { id: helpId },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    full_name: true,
+                    avatar_url: true,
+                    reputation_score: true,
+                },
+            },
+            assignments: {
+                where: {
+                    status: {
+                        in: ["TAKEN", "CONFIRMED", "COMPLETED"],
+                    },
+                },
+                take: 1,
+                include: {
+                    helper: {
+                        select: {
+                            id: true,
+                            full_name: true,
+                            avatar_url: true,
+                            reputation_score: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!help) {
+        throw new Error("HELP_NOT_FOUND");
+    }
+
+    const assignment = help.assignments[0] ?? null;
+
+    const isRequester = help.user_id === currentUserId;
+    const isHelper = assignment && assignment.helper_id === currentUserId;
+
+    //   Cek akses
+    if (
+        help.status !== "OPEN" &&
+        !isRequester &&
+        !isHelper
+    ) {
+        throw new Error("FORBIDDEN");
+    }
+
+    return {
+        id: help.id,
+        title: help.title,
+        description: help.description,
+        category: help.category,
+        status: help.status,
+        latitude: help.latitude,
+        longitude: help.longitude,
+        timeout_at: help.timeout_at,
+        grace_period_end: help.grace_period_end,
+        created_at: help.created_at,
+
+        requester: help.user,
+
+        // Hanya requester yang boleh lihat relawan
+        helper: isRequester
+            ? assignment
+                ? assignment.helper
+                : null
+            : null,
+    };
 };
 
 // GET ACTIVE HELP REQUEST BY USER

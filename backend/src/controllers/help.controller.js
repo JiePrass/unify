@@ -82,16 +82,34 @@ exports.getNearbyHelpRequests = async (req, res) => {
 
 exports.getHelpRequestById = async (req, res) => {
     try {
-        const id = Number(req.params.id);
+        const helpId = Number(req.params.id);
+        const userId = req.user.id;
 
-        const help = await helpRequestService.getHelpRequestById(id);
-        if (!help) {
-            return res.status(404).json({ success: false, message: "Help request not found." });
+        const data = await helpRequestService.getHelpRequestById(helpId, userId);
+
+        return res.json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        if (err.message === "HELP_NOT_FOUND") {
+            return res.status(404).json({
+                success: false,
+                message: "Help request not found",
+            });
         }
 
-        return res.json({ success: true, data: help });
-    } catch (err) {
-        return res.status(500).json({ success: false, message: err.message });
+        if (err.message === "FORBIDDEN") {
+            return res.status(403).json({
+                success: false,
+                message: "You are not allowed to access this help request",
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
     }
 };
 
