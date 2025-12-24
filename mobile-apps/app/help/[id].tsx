@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { getHelpRequestById, takeHelpRequest, confirmHelper, cancelHelpRequest } from "@/lib/api/help";
+import { getHelpRequestById, takeHelpRequest, confirmHelper, cancelHelpRequest, markHelpCompleted, markHelpFailed } from "@/lib/api/help";
 import HeaderScreen from "@/components/header-screen";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -111,6 +111,27 @@ export default function HelpDetailScreen() {
             setActionLoading(false);
         }
     };
+
+    const handleCompleteHelp = async () => {
+        try {
+            setActionLoading(true);
+            await markHelpCompleted(help.assignment.id);
+            fetchHelp();
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleFailHelp = async () => {
+        try {
+            setActionLoading(true);
+            await markHelpFailed(help.assignment.id);
+            fetchHelp();
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
 
     if (loading || !help) {
         return (
@@ -285,7 +306,7 @@ export default function HelpDetailScreen() {
                     )}
 
                     {/* ACTION BUTTONS */}
-                    {help.permissions?.can_take && (
+                    {help.permissions?.can_take && help.status === "OPEN" && (
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: primary }]}
                             disabled={actionLoading}
@@ -301,7 +322,7 @@ export default function HelpDetailScreen() {
                         </TouchableOpacity>
                     )}
 
-                    {help.permissions?.can_confirm && (
+                    {help.permissions?.can_confirm && help.status === "TAKEN" && (
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: primary }]}
                             disabled={actionLoading}
@@ -317,25 +338,55 @@ export default function HelpDetailScreen() {
                         </TouchableOpacity>
                     )}
 
-                    {/* CANCEL BUTTON (Requester & Helper) */}
-                    {help.status !== "COMPLETED" && (
-                        <TouchableOpacity
-                            style={[
-                                styles.actionButton,
-                                styles.cancelButton
-                            ]}
-                            disabled={actionLoading}
-                            onPress={handleCancelHelp}
-                        >
-                            {actionLoading ? (
-                                <ActivityIndicator color="#EF4444" />
-                            ) : (
-                                <ThemedText style={styles.cancelText}>
-                                    Batalkan Bantuan
-                                </ThemedText>
-                            )}
-                        </TouchableOpacity>
+                    {help.status === "IN_PROGRESS" && help.permissions?.is_helper && (
+                        <>
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: primary }]}
+                                disabled={actionLoading}
+                                onPress={handleCompleteHelp}
+                            >
+                                {actionLoading ? (
+                                    <ActivityIndicator color={icon} />
+                                ) : (
+                                    <ThemedText style={styles.actionText}>
+                                        Bantuan Selesai
+                                    </ThemedText>
+                                )}
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.cancelButton]}
+                                disabled={actionLoading}
+                                onPress={handleFailHelp}
+                            >
+                                {actionLoading ? (
+                                    <ActivityIndicator color="#EF4444" />
+                                ) : (
+                                    <ThemedText style={styles.cancelText}>
+                                        Bantuan Gagal
+                                    </ThemedText>
+                                )}
+                            </TouchableOpacity>
+                        </>
                     )}
+
+                    {help.status !== "IN_PROGRESS" &&
+                        help.status !== "COMPLETED" &&
+                        help.permissions?.can_cancel && (
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.cancelButton]}
+                                disabled={actionLoading}
+                                onPress={handleCancelHelp}
+                            >
+                                {actionLoading ? (
+                                    <ActivityIndicator color="#EF4444" />
+                                ) : (
+                                    <ThemedText style={styles.cancelText}>
+                                        Batalkan Bantuan
+                                    </ThemedText>
+                                )}
+                            </TouchableOpacity>
+                        )}
                 </BottomSheetView>
             </BottomSheet>
 

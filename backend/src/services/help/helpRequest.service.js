@@ -162,9 +162,25 @@ exports.getHelpRequestById = async (helpId, currentUserId) => {
             ? assignment.helper
             : null,
 
+        role: isRequester
+            ? "REQUESTER"
+            : isHelper
+                ? "HELPER"
+                : "PUBLIC",
+
         permissions: {
-            can_take: help.status === "OPEN" && !isRequester,
-            can_confirm: help.status === "TAKEN" && isRequester,
+            can_take:
+                help.status === "OPEN" && !isRequester,
+            can_confirm:
+                help.status === "TAKEN" && isRequester,
+            can_complete:
+                help.status === "IN_PROGRESS" && isHelper,
+            can_fail:
+                help.status === "IN_PROGRESS" && isHelper,
+            can_cancel:
+                help.status !== "COMPLETED" &&
+                help.status !== "IN_PROGRESS" &&
+                (isRequester || isHelper),
         },
     };
 };
