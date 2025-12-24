@@ -1,9 +1,0 @@
-[0;1;32m●[0m postgresql.service - PostgreSQL RDBMS
-     Loaded: loaded (]8;;file://Njie/usr/lib/systemd/system/postgresql.service/usr/lib/systemd/system/postgresql.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
-     Active: [0;1;32mactive (exited)[0m since Mon 2025-12-01 08:00:11 WIB; 31min ago
-    Process: 1186 ExecStart=/bin/true (code=exited, status=0/SUCCESS)
-   Main PID: 1186 (code=exited, status=0/SUCCESS)
-        CPU: 2ms
-
-Dec 01 08:00:11 Njie systemd[1]: Starting postgresql.service - PostgreSQL RDBMS...
-Dec 01 08:00:11 Njie systemd[1]: Finished postgresql.service - PostgreSQL RDBMS.

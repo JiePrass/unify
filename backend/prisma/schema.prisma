@@ -64,6 +64,25 @@ enum CancelStage {
   AFTER_CONFIRMED
 }
 
+enum CancelReasonCode {
+  // === REQUESTER ===
+  CHANGE_OF_MIND      
+  FOUND_OTHER_HELPER 
+  NO_LONGER_NEEDED 
+  HELPER_NO_RESPONSE 
+  HELPER_LATE 
+
+  // === HELPER ===
+  CANNOT_REACH_LOCATION
+  REQUESTER_NO_SHOW 
+  REQUESTER_UNRESPONSIVE
+  TASK_NOT_AS_DESCRIBED
+
+  // === SYSTEM ===
+  TIMEOUT 
+  POLICY_VIOLATION 
+}
+
 model User {
   id               Int              @id @default(autoincrement())
   full_name        String           @db.VarChar(150)
@@ -80,12 +99,12 @@ model User {
 
   helpRequests     HelpRequest[]
   helpAssignments  HelpAssignment[]
-  messages         Message[]
   notifications    Notification[]
   userMissions     UserMission[]
   userBadges       UserBadge[]
   reportsMade      Report[]         @relation("ReportsByUser")
   reportsReceived  Report[]         @relation("ReportsToUser")
+  chatMessages     ChatMessage[]
   auditLogs        AuditLog[]
   cancelEvents     CancelEvent[]
 
@@ -110,8 +129,8 @@ model HelpRequest {
 
   user             User                @relation(fields: [user_id], references: [id])
   assignments      HelpAssignment[]
-  messages         Message[]
   reports          Report[]
+  chatRooms        ChatRoom[]
 
   cancelEvents     CancelEvent[]
 }
@@ -126,22 +145,12 @@ model HelpAssignment {
   failed_at        DateTime?
   completed_at     DateTime?
   updated_at       DateTime         @updatedAt
+  chatRoom         ChatRoom?
 
   helpRequest      HelpRequest      @relation(fields: [help_request_id], references: [id])
   helper           User             @relation(fields: [helper_id], references: [id])
 
   cancelEvents     CancelEvent[]
-}
-
-model Message {
-  id               Int         @id @default(autoincrement())
-  help_request_id  Int
-  sender_id        Int
-  message          String
-  created_at       DateTime    @default(now())
-
-  helpRequest      HelpRequest @relation(fields: [help_request_id], references: [id])
-  sender           User        @relation(fields: [sender_id], references: [id])
 }
 
 model Notification {
@@ -224,7 +233,7 @@ model CancelEvent {
   actor            CancelActor
   actor_user_id    Int?
   stage            CancelStage
-  reason_code      String       @db.VarChar(50)
+  reason_code      CancelReasonCode
   reason_text      String?
   impact_score     Int
   violation_score  Int
@@ -255,4 +264,33 @@ model EmailToken {
   createdAt DateTime  @default(now())
 
   user      User      @relation(fields: [userId], references: [id])
+}
+
+model ChatRoom {
+  id              Int      @id @default(autoincrement())
+  help_request_id Int
+  assignment_id   Int
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  closed_at       DateTime?
+
+  helpRequest     HelpRequest   @relation(fields: [help_request_id], references: [id])
+  assignment      HelpAssignment @relation(fields: [assignment_id], references: [id])
+
+  messages        ChatMessage[]
+
+  @@unique([assignment_id])
+}
+
+model ChatMessage {
+  id           Int      @id @default(autoincrement())
+  chat_room_id Int
+  sender_id    Int
+  message      String
+  created_at   DateTime @default(now())
+
+  chatRoom     ChatRoom @relation(fields: [chat_room_id], references: [id])
+  sender       User     @relation(fields: [sender_id], references: [id])
+
+  @@index([chat_room_id])
 }

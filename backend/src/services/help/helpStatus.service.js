@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const missionService = require('../missions.service');
+const chatService = require('../chat.service');
 
 exports.markCompleted = async (assignmentId, helperId) => {
     return prisma.$transaction(async (tx) => {
@@ -40,6 +41,8 @@ exports.markCompleted = async (assignmentId, helperId) => {
             data: { status: 'COMPLETED' },
         });
 
+        chatService.closeChatRoom(assignment.id, tx)
+
         // reward => helper
         await missionService.updateMissionProgress(
             helperId,
@@ -66,6 +69,8 @@ exports.markFailed = async (assignmentId) => {
         where: { id: assignment.help_request_id },
         data: { status: "CANCELLED" }
     });
+
+    chatService.closeChatRoom(assignment.id, tx)
 
     return assignment;
 };

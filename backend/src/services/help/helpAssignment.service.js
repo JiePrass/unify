@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
+const { CancelActor, CancelStage, CancelReasonCode } = require('@prisma/client');
 const prisma = new PrismaClient();
+const chatService = require('../chat.service');
 const missionService = require('../missions.service');
 
 exports.takeHelpRequest = async (helperId, helpRequestId) => {
@@ -56,6 +58,8 @@ exports.takeHelpRequest = async (helperId, helpRequestId) => {
                 taken_at: new Date(),
             },
         });
+
+        await chatService.createChatRoom(assignment.id, tx);
 
         await missionService.updateMissionProgress(
             helperId,
@@ -132,6 +136,7 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
         throw new Error("Alasan pembatalan wajib diisi");
     }
 
+    // ===== FETCH HELP + ACTIVE ASSIGNMENT =====
     const help = await prisma.helpRequest.findUnique({
         where: { id: helpRequestId },
         include: {
@@ -150,32 +155,57 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
     // ===== DETECT ACTOR =====
     let actor;
     if (help.user_id === userId) {
-        actor = "REQUESTER";
+        actor = CancelActor.REQUESTER;
     } else if (assignment && assignment.helper_id === userId) {
-        actor = "HELPER";
+        actor = CancelActor.HELPER;
     } else {
         throw new Error("Tidak memiliki hak membatalkan bantuan ini");
     }
 
+    // ===== VALIDATE REASON BY ACTOR =====
+    const VALID_REASON_BY_ACTOR = {
+        [CancelActor.REQUESTER]: [
+            CancelReasonCode.CHANGE_OF_MIND,
+            CancelReasonCode.FOUND_OTHER_HELPER,
+            CancelReasonCode.NO_LONGER_NEEDED,
+            CancelReasonCode.HELPER_NO_RESPONSE,
+            CancelReasonCode.HELPER_LATE,
+        ],
+        [CancelActor.HELPER]: [
+            CancelReasonCode.CANNOT_REACH_LOCATION,
+            CancelReasonCode.REQUESTER_NO_SHOW,
+            CancelReasonCode.REQUESTER_UNRESPONSIVE,
+            CancelReasonCode.TASK_NOT_AS_DESCRIBED,
+        ],
+    };
+
+    if (!VALID_REASON_BY_ACTOR[actor]?.includes(reason_code)) {
+        throw new Error("Reason code tidak valid untuk aktor ini");
+    }
+
     // ===== DETECT STAGE =====
-    let stage = "BEFORE_TAKEN";
-    if (assignment?.status === "TAKEN") stage = "AFTER_TAKEN";
-    if (assignment?.status === "CONFIRMED") stage = "AFTER_CONFIRMED";
+    let stage = CancelStage.BEFORE_TAKEN;
+    if (assignment?.status === "TAKEN") stage = CancelStage.AFTER_TAKEN;
+    if (assignment?.status === "CONFIRMED")
+        stage = CancelStage.AFTER_CONFIRMED;
 
     // ===== SCORING RULE =====
     let impact_score = 0;
     let violation_score = 0;
 
-    if (actor === "REQUESTER" && stage !== "BEFORE_TAKEN") {
+    if (actor === CancelActor.REQUESTER && stage !== CancelStage.BEFORE_TAKEN) {
         impact_score = 10;
-        violation_score = stage === "AFTER_CONFIRMED" ? 20 : 10;
+        violation_score =
+            stage === CancelStage.AFTER_CONFIRMED ? 20 : 10;
     }
 
-    if (actor === "HELPER") {
+    if (actor === CancelActor.HELPER) {
         impact_score = 15;
-        violation_score = stage === "AFTER_CONFIRMED" ? 25 : 10;
+        violation_score =
+            stage === CancelStage.AFTER_CONFIRMED ? 25 : 10;
     }
 
+    // ===== TRANSACTION =====
     return prisma.$transaction(async (tx) => {
         await tx.cancelEvent.create({
             data: {
@@ -191,7 +221,7 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
             },
         });
 
-        if (actor === "REQUESTER") {
+        if (actor === CancelActor.REQUESTER) {
             await tx.helpRequest.update({
                 where: { id: help.id },
                 data: {
@@ -201,7 +231,7 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
             });
         }
 
-        if (actor === "HELPER" && assignment) {
+        if (actor === CancelActor.HELPER && assignment) {
             await tx.helpAssignment.update({
                 where: { id: assignment.id },
                 data: {
@@ -218,6 +248,8 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
             });
         }
 
+        chatService.closeChatRoom(assignment.id, tx)
+
         return {
             actor,
             stage,
@@ -226,3 +258,4 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
         };
     });
 };
+

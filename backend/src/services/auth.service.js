@@ -40,7 +40,7 @@ exports.register = async (data) => {
     });
 
     // For Development: Log OTP to console
-    console.log(`Verification OTP for ${email}: ${otp}`);
+    // console.log(`Verification OTP for ${email}: ${otp}`);
 
     const emailHtml = `
         <h3>Verifikasi Email</h3>
