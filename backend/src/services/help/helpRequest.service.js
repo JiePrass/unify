@@ -164,7 +164,7 @@ exports.getHelpRequestById = async (helpId, currentUserId) => {
 
         permissions: {
             can_take: help.status === "OPEN" && !isRequester,
-            can_confirm: help.status === "TAKEN" && isHelper,
+            can_confirm: help.status === "TAKEN" && isRequester,
         },
     };
 };
