@@ -88,7 +88,7 @@ exports.getNearbyHelpRequests = async (lat, lng, radius = 5000) => {
 // DETAIL
 exports.getHelpRequestById = async (helpId, currentUserId) => {
     const help = await prisma.helpRequest.findUnique({
-        where: { id: helpId },
+        where: { id: Number(helpId) },
         include: {
             user: {
                 select: {
@@ -105,7 +105,10 @@ exports.getHelpRequestById = async (helpId, currentUserId) => {
                     },
                 },
                 take: 1,
-                include: {
+                select: {
+                    id: true,
+                    status: true,
+                    helper_id: true,
                     helper: {
                         select: {
                             id: true,
@@ -119,16 +122,13 @@ exports.getHelpRequestById = async (helpId, currentUserId) => {
         },
     });
 
-    if (!help) {
-        throw new Error("HELP_NOT_FOUND");
-    }
+    if (!help) throw new Error("HELP_NOT_FOUND");
 
     const assignment = help.assignments[0] ?? null;
 
     const isRequester = help.user_id === currentUserId;
-    const isHelper = assignment && assignment.helper_id === currentUserId;
+    const isHelper = assignment?.helper_id === currentUserId;
 
-    //   Cek akses
     if (
         help.status !== "OPEN" &&
         !isRequester &&
@@ -151,14 +151,25 @@ exports.getHelpRequestById = async (helpId, currentUserId) => {
 
         requester: help.user,
 
-        // Hanya requester yang boleh lihat relawan
-        helper: isRequester
-            ? assignment
-                ? assignment.helper
-                : null
+        assignment: assignment
+            ? {
+                id: assignment.id,
+                status: assignment.status,
+            }
             : null,
+
+        helper: isRequester && assignment
+            ? assignment.helper
+            : null,
+
+        permissions: {
+            can_take: help.status === "OPEN" && !isRequester,
+            can_confirm: help.status === "TAKEN" && isHelper,
+        },
     };
 };
+
+
 
 // GET ACTIVE HELP REQUEST BY USER
 exports.getActiveHelpByUser = async (userId, lat = null, lng = null) => {

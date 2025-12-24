@@ -167,7 +167,10 @@ export default function HelpScreen() {
                     <HelpCard
                         data={activeHelp.help}
                         onPress={() =>
-                            router.push(`/`)
+                            router.push({
+                                pathname: "/help/[id]",
+                                params: { id: activeHelp.help.id },
+                            })
                         }
                     />
                 ) : (
@@ -265,7 +268,10 @@ export default function HelpScreen() {
                             <HelpCard
                                 data={item}
                                 onPress={() =>
-                                    router.push(`/`)
+                                    router.push({
+                                        pathname: "/help/[id]",
+                                        params: { id: item.id },
+                                    })
                                 }
                             />
                         )}

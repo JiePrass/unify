@@ -1,16 +1,23 @@
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <RootStack />
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <RootStack />
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -31,8 +38,8 @@ function RootStack() {
         ) : (
           <>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="help/[id]" />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-            <Stack.Screen name="event/[id]" />
           </>
         )}
       </Stack>

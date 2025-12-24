@@ -36,13 +36,13 @@ export const getCategoryIcon = (category: string) => {
 const getStatusColor = (status: string, colors: any) => {
     switch (status.toUpperCase()) {
         case "IN_PROGRESS":
-            return "#F59E0B";
+            return "#ead326ff";
         case "TAKEN":
-            return "#7f0ee9ff";
+            return "#e9950eff";
         case "OPEN":
-            return colors.primary;
+            return "#10B981";
         case "COMPLETED":
-            return "#22C55E";
+            return "#107134ff";
         case "CANCELLED":
             return "#EF4444";
         default:
@@ -111,7 +111,6 @@ export function HelpCard({ data, onPress }: HelpCardProps & { data: any }) {
                         <ThemedText style={styles.badgeText}>
                             {data.category.toUpperCase()}
                         </ThemedText>
-
 
                         {/* Distance */}
                         <View style={styles.metaItem}>

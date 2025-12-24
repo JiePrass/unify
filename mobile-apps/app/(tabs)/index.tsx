@@ -161,7 +161,10 @@ export default function HomeScreen() {
               <HelpCard
                 data={item}
                 onPress={() =>
-                  router.push(`/`)
+                  router.push({
+                    pathname: "/help/[id]",
+                    params: { id: item.id },
+                  })
                 }
               />
             )}
