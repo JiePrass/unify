@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const missionService = require('../missions/missions.service');
+const missionService = require('../missions.service');
 
 exports.takeHelpRequest = async (helperId, helpRequestId) => {
     return prisma.$transaction(async (tx) => {
@@ -125,15 +125,104 @@ exports.confirmHelper = async (helpRequestId, assignmentId, requesterId) => {
     });
 };
 
-exports.cancelHelpRequest = async (userId, helpRequestId) => {
-    const help = await prisma.helpRequest.findUnique({ where: { id: helpRequestId }});
+exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
+    const { reason_code, reason_text } = payload;
 
-    if (!help) throw new Error("Tidak ditemukan");
-    if (help.user_id !== userId) throw new Error("Tidak boleh membatalkan request orang lain");
+    if (!reason_code) {
+        throw new Error("Alasan pembatalan wajib diisi");
+    }
 
-    return prisma.helpRequest.update({
+    const help = await prisma.helpRequest.findUnique({
         where: { id: helpRequestId },
-        data: { status: "CANCELLED", deleted_at: new Date() }
+        include: {
+            assignments: {
+                where: {
+                    status: { in: ["TAKEN", "CONFIRMED"] },
+                },
+            },
+        },
+    });
+
+    if (!help) throw new Error("Help request tidak ditemukan");
+
+    const assignment = help.assignments[0] ?? null;
+
+    // ===== DETECT ACTOR =====
+    let actor;
+    if (help.user_id === userId) {
+        actor = "REQUESTER";
+    } else if (assignment && assignment.helper_id === userId) {
+        actor = "HELPER";
+    } else {
+        throw new Error("Tidak memiliki hak membatalkan bantuan ini");
+    }
+
+    // ===== DETECT STAGE =====
+    let stage = "BEFORE_TAKEN";
+    if (assignment?.status === "TAKEN") stage = "AFTER_TAKEN";
+    if (assignment?.status === "CONFIRMED") stage = "AFTER_CONFIRMED";
+
+    // ===== SCORING RULE =====
+    let impact_score = 0;
+    let violation_score = 0;
+
+    if (actor === "REQUESTER" && stage !== "BEFORE_TAKEN") {
+        impact_score = 10;
+        violation_score = stage === "AFTER_CONFIRMED" ? 20 : 10;
+    }
+
+    if (actor === "HELPER") {
+        impact_score = 15;
+        violation_score = stage === "AFTER_CONFIRMED" ? 25 : 10;
+    }
+
+    return prisma.$transaction(async (tx) => {
+        await tx.cancelEvent.create({
+            data: {
+                help_request_id: help.id,
+                assignment_id: assignment?.id,
+                actor,
+                actor_user_id: userId,
+                stage,
+                reason_code,
+                reason_text,
+                impact_score,
+                violation_score,
+            },
+        });
+
+        if (actor === "REQUESTER") {
+            await tx.helpRequest.update({
+                where: { id: help.id },
+                data: {
+                    status: "CANCELLED",
+                    deleted_at: new Date(),
+                },
+            });
+        }
+
+        if (actor === "HELPER" && assignment) {
+            await tx.helpAssignment.update({
+                where: { id: assignment.id },
+                data: {
+                    status: "FAILED",
+                    failed_at: new Date(),
+                },
+            });
+
+            await tx.helpRequest.update({
+                where: { id: help.id },
+                data: {
+                    status: "OPEN",
+                },
+            });
+        }
+
+        return {
+            actor,
+            stage,
+            impact_score,
+            violation_score,
+        };
     });
 };
-

@@ -1,4 +1,4 @@
-const missionService = require('../services/missions/missions.service')
+const missionService = require('../services/missions.service')
 
 exports.getMyMissions = async (req, res) => {
     const userId = req.user.id

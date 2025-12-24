@@ -43,7 +43,11 @@ exports.cancelHelpRequest = async (req, res) => {
         const userId = req.user.id;
         const helpId = Number(req.params.id);
 
-        const result = await helpAssignmentService.cancelHelpRequest(userId, helpId);
+        const result = await helpAssignmentService.cancelHelpRequest(
+            userId,
+            helpId,
+            req.body
+        );
         return res.json({ success: true, data: result });
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message });

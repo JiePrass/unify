@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const missionService = require('../missions/missions.service');
+const missionService = require('../missions.service');
 const { calculateDistanceKm } = require('../../utils/calculateDistanceKm');
 
 // CREATE

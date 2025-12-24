@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { generateOtp } = require('../utils/otp');
 const { generateToken } = require('../utils/token');
 const mailer = require('../lib/mailer');
-const missionService = require('./missions/missions.service');
+const missionService = require('./missions.service');
 
 exports.register = async (data) => {
     const { full_name, email, phone, password } = data;

@@ -52,6 +52,18 @@ enum TokenType {
   RESET
 }
 
+enum CancelActor {
+  REQUESTER
+  HELPER
+  SYSTEM
+}
+
+enum CancelStage {
+  BEFORE_TAKEN
+  AFTER_TAKEN
+  AFTER_CONFIRMED
+}
+
 model User {
   id               Int              @id @default(autoincrement())
   full_name        String           @db.VarChar(150)
@@ -75,6 +87,7 @@ model User {
   reportsMade      Report[]         @relation("ReportsByUser")
   reportsReceived  Report[]         @relation("ReportsToUser")
   auditLogs        AuditLog[]
+  cancelEvents     CancelEvent[]
 
   emailTokens      EmailToken[]
 }
@@ -99,6 +112,8 @@ model HelpRequest {
   assignments      HelpAssignment[]
   messages         Message[]
   reports          Report[]
+
+  cancelEvents     CancelEvent[]
 }
   
 model HelpAssignment {
@@ -114,6 +129,8 @@ model HelpAssignment {
 
   helpRequest      HelpRequest      @relation(fields: [help_request_id], references: [id])
   helper           User             @relation(fields: [helper_id], references: [id])
+
+  cancelEvents     CancelEvent[]
 }
 
 model Message {
@@ -199,6 +216,25 @@ model Report {
   reportedUser     User           @relation("ReportsToUser", fields: [reported_user_id], references: [id])
   helpRequest      HelpRequest?   @relation(fields: [help_request_id], references: [id])
 }
+
+model CancelEvent {
+  id               Int          @id @default(autoincrement())
+  help_request_id  Int
+  assignment_id    Int?
+  actor            CancelActor
+  actor_user_id    Int?
+  stage            CancelStage
+  reason_code      String       @db.VarChar(50)
+  reason_text      String?
+  impact_score     Int
+  violation_score  Int
+  created_at       DateTime     @default(now())
+
+  helpRequest      HelpRequest  @relation(fields: [help_request_id], references: [id])
+  assignment       HelpAssignment? @relation(fields: [assignment_id], references: [id])
+  actorUser        User?        @relation(fields: [actor_user_id], references: [id])
+}
+
 
 model AuditLog {
   id         Int       @id @default(autoincrement())
