@@ -306,7 +306,7 @@ export default function HelpDetailScreen() {
                     )}
 
                     {/* ACTION BUTTONS */}
-                    {help.permissions?.can_take && help.status === "OPEN" && (
+                    {help.permissions?.can_take && (
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: primary }]}
                             disabled={actionLoading}
@@ -322,7 +322,7 @@ export default function HelpDetailScreen() {
                         </TouchableOpacity>
                     )}
 
-                    {help.permissions?.can_confirm && help.status === "TAKEN" && (
+                    {help.permissions?.can_confirm && (
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: primary }]}
                             disabled={actionLoading}
@@ -338,55 +338,54 @@ export default function HelpDetailScreen() {
                         </TouchableOpacity>
                     )}
 
-                    {help.status === "IN_PROGRESS" && help.permissions?.is_helper && (
-                        <>
-                            <TouchableOpacity
-                                style={[styles.actionButton, { backgroundColor: primary }]}
-                                disabled={actionLoading}
-                                onPress={handleCompleteHelp}
-                            >
-                                {actionLoading ? (
-                                    <ActivityIndicator color={icon} />
-                                ) : (
-                                    <ThemedText style={styles.actionText}>
-                                        Bantuan Selesai
-                                    </ThemedText>
-                                )}
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.actionButton, styles.cancelButton]}
-                                disabled={actionLoading}
-                                onPress={handleFailHelp}
-                            >
-                                {actionLoading ? (
-                                    <ActivityIndicator color="#EF4444" />
-                                ) : (
-                                    <ThemedText style={styles.cancelText}>
-                                        Bantuan Gagal
-                                    </ThemedText>
-                                )}
-                            </TouchableOpacity>
-                        </>
+                    {help.permissions?.can_complete && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, { backgroundColor: primary }]}
+                            disabled={actionLoading}
+                            onPress={handleCompleteHelp}
+                        >
+                            {actionLoading ? (
+                                <ActivityIndicator color={icon} />
+                            ) : (
+                                <ThemedText style={styles.actionText}>
+                                    Bantuan Selesai
+                                </ThemedText>
+                            )}
+                        </TouchableOpacity>
                     )}
 
-                    {help.status !== "IN_PROGRESS" &&
-                        help.status !== "COMPLETED" &&
-                        help.permissions?.can_cancel && (
-                            <TouchableOpacity
-                                style={[styles.actionButton, styles.cancelButton]}
-                                disabled={actionLoading}
-                                onPress={handleCancelHelp}
-                            >
-                                {actionLoading ? (
-                                    <ActivityIndicator color="#EF4444" />
-                                ) : (
-                                    <ThemedText style={styles.cancelText}>
-                                        Batalkan Bantuan
-                                    </ThemedText>
-                                )}
-                            </TouchableOpacity>
-                        )}
+                    {help.permissions?.can_fail && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.cancelButton]}
+                            disabled={actionLoading}
+                            onPress={handleFailHelp}
+                        >
+                            {actionLoading ? (
+                                <ActivityIndicator color="#EF4444" />
+                            ) : (
+                                <ThemedText style={styles.cancelText}>
+                                    Bantuan Gagal
+                                </ThemedText>
+                            )}
+                        </TouchableOpacity>
+                    )}
+
+                    {help.permissions?.can_cancel && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.cancelButton]}
+                            disabled={actionLoading}
+                            onPress={handleCancelHelp}
+                        >
+                            {actionLoading ? (
+                                <ActivityIndicator color="#EF4444" />
+                            ) : (
+                                <ThemedText style={styles.cancelText}>
+                                    Batalkan Bantuan
+                                </ThemedText>
+                            )}
+                        </TouchableOpacity>
+                    )}
+
                 </BottomSheetView>
             </BottomSheet>
 
