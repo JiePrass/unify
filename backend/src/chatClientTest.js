@@ -2,7 +2,7 @@ const { io } = require("socket.io-client");
 
 // https://unify-production-d351.up.railway.app
 
-const socket = io("http://localhost:2304", {
+const socket = io("https://unify-production-d351.up.railway.app", {
   auth: { 
     token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2NDUxMzAsImV4cCI6MTc2NjY0ODczMH0.RomMCj-3IVTi3Z7R9xbQSm-yXC7Cq2Lv5uxhBwLkSsQ"
   }
@@ -18,7 +18,7 @@ socket.on("connect", () => {
 
 // Join / error handlers
 socket.on("join_success", ({ chatRoomId }) => {
-  console.log("Joined room:", chatRoomId);
+  console.log("Joined room:", chatRoomId);  
 
   // Send test message
   socket.emit("send_message", { userId: 1, chatRoomId, content: "Hello!" });
