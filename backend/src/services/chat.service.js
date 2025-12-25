@@ -68,7 +68,7 @@ exports.createMessage = async (chatRoomId, senderId, content) => {
         data: {
             chat_room_id: chatRoomId,
             sender_id: senderId,
-            message: content,
+            content: content,
         },
     });
 };

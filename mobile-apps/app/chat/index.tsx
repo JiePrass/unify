@@ -63,8 +63,10 @@ export default function ChatScreen() {
             });
         });
 
-        socket.on("join_success", ({ chatRoomId }) => {
+        socket.on("join_success", ({ chatRoomId, messages }) => {
             setChatRoomId(chatRoomId);
+            setMessages(messages);
+            requestAnimationFrame(scrollToBottom);
         });
 
         socket.on("new_message", (msg: Message) => {
@@ -79,6 +81,8 @@ export default function ChatScreen() {
             socketRef.current = null;
         };
     }, [help.id, userId, token]);
+
+    console.log(messages)
 
     /* ===================== HELPERS ===================== */
     const scrollToBottom = () => {
