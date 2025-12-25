@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   View,
   Image,
-  FlatList
+  FlatList,
+  RefreshControl
 } from "react-native";
 import { router } from "expo-router";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -28,122 +29,133 @@ export default function MissionScreen() {
   const [missions, setMissions] = useState<any[]>([]);
   const [loadingMissions, setLoadingMissions] = useState(true);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMissions = async () => {
+    try {
+      setLoadingMissions(true);
+      const data = await getUserMissions();
+      setMissions(data);
+    } finally {
+      setLoadingMissions(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    getUserMissions()
-      .then(setMissions)
-      .finally(() => setLoadingMissions(false));
+    fetchMissions();
   }, []);
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <ActivityIndicator />
-      </SafeAreaView>
-    );
-  }
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchMissions();
+  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <ThemedView style={styles.container}>
-        {/* Header */}
-        <ThemedView style={styles.header}>
-          {/* Left: Point */}
-          <View style={styles.pointRow}>
-            <Image
-              source={require("@/assets/icons/unify-coin.png")}
-              style={styles.coinIcon}
-              resizeMode="contain"
-            />
+        <FlatList
+          data={missions}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[primary]} />
+          }
+          ListHeaderComponent={
+            <>
+              {/* Header */}
+              <ThemedView style={styles.header}>
+                {/* Left: Point */}
+                <View style={styles.pointRow}>
+                  <Image
+                    source={require("@/assets/icons/unify-coin.png")}
+                    style={styles.coinIcon}
+                    resizeMode="contain"
+                  />
 
-            <View>
-              <ThemedText type="subtitle">Total Poin</ThemedText>
-              <ThemedText type="title">
-                {user?.points ?? 0}
-              </ThemedText>
-            </View>
-          </View>
+                  <View>
+                    <ThemedText type="subtitle">Total Poin</ThemedText>
+                    <ThemedText type="title">
+                      {user?.points ?? 0}
+                    </ThemedText>
+                  </View>
+                </View>
 
-          <Pressable
-            onPress={() => router.push("/profile")}
-            style={styles.avatarWrapper}
-          >
-            <Image
-              source={
-                user?.avatar_url
-                  ? { uri: user.avatar_url }
-                  : require("@/assets/icons/avatar-placeholder.png")
-              }
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
-          </Pressable>
-        </ThemedView>
+                <Pressable
+                  onPress={() => router.push("/profile")}
+                  style={styles.avatarWrapper}
+                >
+                  <Image
+                    source={
+                      user?.avatar_url
+                        ? { uri: user.avatar_url }
+                        : require("@/assets/icons/avatar-placeholder.png")
+                    }
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+              </ThemedView>
 
-        {/* Action Buttons */}
-        <ThemedView style={styles.actionRow}>
-          <Pressable
-            style={[
-              styles.actionButton,
-              {
-                backgroundColor: card,
-                borderColor: border,
-              },
-            ]}
-            onPress={() => router.push("/")}
-          >
-            <Ionicons
-              name="ribbon"
-              size={32}
-              color={primary}
-            />
-            <ThemedText type="defaultSemiBold">Lencana</ThemedText>
-          </Pressable>
+              {/* Action Buttons */}
+              <ThemedView style={styles.actionRow}>
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: card,
+                      borderColor: border,
+                    },
+                  ]}
+                  onPress={() => router.push("/")}
+                >
+                  <Ionicons
+                    name="ribbon"
+                    size={32}
+                    color={primary}
+                  />
+                  <ThemedText type="defaultSemiBold">Lencana</ThemedText>
+                </Pressable>
 
-          <Pressable
-            style={[
-              styles.actionButton,
-              {
-                backgroundColor: card,
-                borderColor: border,
-              },
-            ]}
-            onPress={() => router.push("/leaderboard")}
-          >
-            <Ionicons
-              name="trophy"
-              size={32}
-              color={primary}
-            />
-            <ThemedText type="defaultSemiBold">
-              Papan Peringkat
-            </ThemedText>
-          </Pressable>
-        </ThemedView>
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: card,
+                      borderColor: border,
+                    },
+                  ]}
+                  onPress={() => router.push("/leaderboard")}
+                >
+                  <Ionicons
+                    name="trophy"
+                    size={32}
+                    color={primary}
+                  />
+                  <ThemedText type="defaultSemiBold">
+                    Papan Peringkat
+                  </ThemedText>
+                </Pressable>
+              </ThemedView>
 
-        {/* Mission List Placeholder */}
-        <ThemedView style={styles.missionContainer}>
-          <ThemedText type="defaultSemiBold" style={{ marginBottom: 12 }}>Daftar Misi</ThemedText>
-          {loadingMissions ? (
-            <ActivityIndicator />
-          ) : (
-            <FlatList
-              data={missions}
-              keyExtractor={(item) => item.id.toString()}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <MissionCard
-                  title={item.mission.title}
-                  description={item.mission.description}
-                  category={item.mission.category}
-                  progress={item.progress_value}
-                  target={item.mission.target_value}
-                  rewardPoints={item.mission.reward_points}
-                  hasBadge={!!item.mission.reward_badge_id}
-                />
-              )}
+              <ThemedText type="defaultSemiBold" style={{ marginBottom: 12 }}>Daftar Misi</ThemedText>
+            </>
+          }
+          renderItem={({ item }) => (
+            <MissionCard
+              title={item.mission.title}
+              description={item.mission.description}
+              category={item.mission.category}
+              progress={item.progress_value}
+              target={item.mission.target_value}
+              rewardPoints={item.mission.reward_points}
+              hasBadge={!!item.mission.reward_badge_id}
             />
           )}
-        </ThemedView>
+          ListEmptyComponent={
+            loadingMissions ? <ActivityIndicator style={{ marginTop: 20 }} /> : null
+          }
+        />
       </ThemedView>
     </SafeAreaView>
   );
@@ -204,6 +216,6 @@ const styles = StyleSheet.create({
 
   /* Mission */
   missionContainer: {
-    flex: 1,
+    paddingBottom: 20
   },
 });

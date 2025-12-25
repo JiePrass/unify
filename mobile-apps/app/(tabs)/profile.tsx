@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { ScrollView, View, StyleSheet, ActivityIndicator, Pressable } from "react-native";
+import { ScrollView, View, StyleSheet, ActivityIndicator, Pressable, RefreshControl } from "react-native";
 import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -19,25 +19,34 @@ export default function ProfileScreen() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [profileRes, statsRes] = await Promise.all([
+                getUserProfile(),
+                getUserStats(),
+            ]);
+
+            setUser(profileRes);
+            setStats(statsRes);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [profileRes, statsRes] = await Promise.all([
-                    getUserProfile(),
-                    getUserStats(),
-                ]);
-
-                setUser(profileRes);
-                setStats(statsRes);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchData();
     }, []);
 
-    if (loading) {
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchData();
+    };
+
+    if (loading && !user) {
         return (
             <View style={[styles.center, { backgroundColor: background }]}>
                 <ActivityIndicator size="large" />
@@ -46,7 +55,12 @@ export default function ProfileScreen() {
     }
 
     return (
-        <ScrollView style={{ backgroundColor: background }}>
+        <ScrollView
+            style={{ backgroundColor: background }}
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[icon]} />
+            }
+        >
             {/* Header */}
             <View style={styles.header}>
                 <Image

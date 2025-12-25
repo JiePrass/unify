@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { LocationProvider } from "@/contexts/location-context";
 import {
   DarkTheme,
   DefaultTheme,
@@ -14,7 +15,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <RootStack />
+          <LocationProvider>
+            <RootStack />
+          </LocationProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

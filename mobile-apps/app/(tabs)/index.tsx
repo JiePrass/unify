@@ -3,10 +3,11 @@ import {
   StyleSheet,
   View,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
-import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocation } from '@/contexts/location-context';
 import { Image } from 'expo-image';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -21,6 +22,11 @@ import { router } from 'expo-router';
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
+  const { location, loading: locationLoading, refreshLocation } = useLocation();
+
+  const [nearbyHelps, setNearbyHelps] = useState<any[]>([]);
+  const [loadingHelp, setLoadingHelp] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -34,144 +40,127 @@ export default function HomeScreen() {
   const card = useThemeColor({}, 'card');
   const icon = useThemeColor({}, 'icon');
 
-  const [nearbyHelps, setNearbyHelps] = useState<any[]>([]);
-  const [loadingHelp, setLoadingHelp] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const fetchNearbyHelp = async () => {
+    if (!location) return;
+    try {
+      setLoadingHelp(true);
+      const { latitude, longitude } = location;
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-
-      const loc = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
+      const res = await getNearbyHelpRequests({
+        latitude,
+        longitude,
+        radius: 5000,
       });
-    })();
-  }, []);
+
+      setNearbyHelps(res.data ?? []);
+    } catch (error) {
+      console.error('Failed fetch nearby help:', error);
+    } finally {
+      setLoadingHelp(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchNearbyHelp = async () => {
-      try {
-        setLoadingHelp(true);
+    if (location) {
+      fetchNearbyHelp();
+    } else if (!locationLoading && !location) {
+      setLoadingHelp(false);
+    }
+  }, [location, locationLoading]);
 
-        const { status } =
-          await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setLoadingHelp(false);
-          return;
-        }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshLocation();
+    if (location) await fetchNearbyHelp();
+    else setRefreshing(false);
+  };
 
-        const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
-
-        const res = await getNearbyHelpRequests({
-          latitude,
-          longitude,
-          radius: 5000,
-        });
-
-        setNearbyHelps(res.data ?? []);
-      } catch (error) {
-        console.error('Failed fetch nearby help:', error);
-      } finally {
-        setLoadingHelp(false);
-      }
-    };
-
-    fetchNearbyHelp();
-  }, []);
-
-
-  if (loading) return null;
+  if (loading) return null; // Auth loading
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: background }}>
-      {/* ================= Header ================= */}
-      <ThemedView style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image
-            source={
-              user?.avatar_url
-                ? { uri: user.avatar_url }
-                : require('@/assets/icons/avatar-placeholder.png')
-            }
-            style={styles.avatar}
-          />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 20 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ================= Header ================= */}
+        <ThemedView style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Image
+              source={
+                user?.avatar_url
+                  ? { uri: user.avatar_url }
+                  : require('@/assets/icons/avatar-placeholder.png')
+              }
+              style={styles.avatar}
+            />
 
-          <View>
-            <ThemedText type="defaultSemiBold">
-              Hi, {user?.full_name ?? 'User'}
-            </ThemedText>
-            <ThemedText type="subtitle">{greeting}</ThemedText>
+            <View>
+              <ThemedText type="defaultSemiBold">
+                Hi, {user?.full_name ?? 'User'}
+              </ThemedText>
+              <ThemedText type="subtitle">{greeting}</ThemedText>
+            </View>
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={[styles.notificationButton, { backgroundColor: card }]}
-        >
-          <Ionicons
-            name="notifications-outline"
-            size={22}
-            color={icon}
-          />
-        </TouchableOpacity>
-      </ThemedView>
+          <TouchableOpacity
+            style={[styles.notificationButton, { backgroundColor: card }]}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={22}
+              color={icon}
+            />
+          </TouchableOpacity>
+        </ThemedView>
 
-      {/* ================= Quick Actions ================= */}
-      <ThemedView style={styles.quickActions}>
-        <QuickAction icon="hand-left" label="Bantuan Aktif" />
-        <QuickAction icon="megaphone" label="Minta Bantuan" />
-        <QuickAction icon="analytics" label="Progress Misi" />
-        <QuickAction icon="time" label="Riwayat" />
-      </ThemedView>
+        {/* ================= Quick Actions ================= */}
+        <ThemedView style={styles.quickActions}>
+          <QuickAction icon="hand-left" label="Bantuan Aktif" />
+          <QuickAction icon="megaphone" label="Minta Bantuan" />
+          <QuickAction icon="analytics" label="Progress Misi" />
+          <QuickAction icon="time" label="Riwayat" />
+        </ThemedView>
 
-      {/* ================= Bantuan Terdekat ================= */}
-      <ThemedView style={{ paddingHorizontal: 16, marginTop: 20, flex: 1 }}>
-        <View style={styles.contentHeader}>
-          <ThemedText type="defaultSemiBold">
-            Bantuan Terdekat
-          </ThemedText>
-          <ThemedText style={styles.link}>
-            Lihat Semua
-          </ThemedText>
-        </View>
+        {/* ================= Bantuan Terdekat ================= */}
+        <ThemedView style={{ paddingHorizontal: 16, marginTop: 20, flex: 1 }}>
+          <View style={styles.contentHeader}>
+            <ThemedText type="defaultSemiBold">
+              Bantuan Terdekat
+            </ThemedText>
+            <ThemedText style={styles.link}>
+              Lihat Semua
+            </ThemedText>
+          </View>
 
-        {loadingHelp && <NearbyHelpState type="loading" />}
+          {loadingHelp && <NearbyHelpState type="loading" />}
 
-        {!loadingHelp && nearbyHelps.length === 0 && (
-          <NearbyHelpState type="empty" />
-        )}
+          {!loadingHelp && nearbyHelps.length === 0 && (
+            <NearbyHelpState type="empty" />
+          )}
 
-        {!loadingHelp && nearbyHelps.length > 0 && (
-          <FlatList
-            data={nearbyHelps}
-            keyExtractor={(item) => String(item.id)}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingVertical: 12,
-              flexGrow: nearbyHelps.length === 0 ? 1 : undefined,
-            }}
-            renderItem={({ item }) => (
-              <HelpCard
-                data={item}
-                onPress={() =>
-                  router.push({
-                    pathname: "/help/[id]",
-                    params: { id: item.id },
-                  })
-                }
-              />
-            )}
-          />
-        )}
-      </ThemedView>
-
+          {!loadingHelp && nearbyHelps.length > 0 && (
+            <View style={{ gap: 12, paddingVertical: 12 }}>
+              {nearbyHelps.map((item) => (
+                <HelpCard
+                  key={item.id}
+                  data={item}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/help/[id]",
+                      params: { id: item.id },
+                    })
+                  }
+                />
+              ))}
+            </View>
+          )}
+        </ThemedView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

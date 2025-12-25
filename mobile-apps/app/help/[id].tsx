@@ -4,6 +4,8 @@ import {
     StyleSheet,
     ActivityIndicator,
     TouchableOpacity,
+    Linking,
+    Platform,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -133,6 +135,20 @@ export default function HelpDetailScreen() {
         }
     };
 
+    const handleOpenMaps = () => {
+        const scheme = Platform.select({ ios: 'maps://0,0?daddr=', android: 'google.navigation:q=' });
+        const latLng = `${help.latitude},${help.longitude}`;
+        const label = help.title;
+        const url = Platform.select({
+            ios: `${scheme}${label}@${latLng}`,
+            android: `${scheme}${latLng}`
+        });
+
+        if (url) {
+            Linking.openURL(url);
+        }
+    };
+
     const handleOpenChat = () => {
         router.push({
             pathname: "/chat",
@@ -168,9 +184,17 @@ export default function HelpDetailScreen() {
                             latitude: help.latitude,
                             longitude: help.longitude,
                         }}
-                        title={help.title}
-                        description={help.description}
-                    />
+                    >
+                        <View style={styles.customMarker}>
+                            <View style={[styles.markerBubble, { backgroundColor: primary }]}>
+                                <Ionicons
+                                    name={getCategoryIcon(help.category)}
+                                    size={20}
+                                    color="#fff"
+                                />
+                            </View>
+                        </View>
+                    </Marker>
                 </MapView>
             </View>
 
@@ -332,16 +356,27 @@ export default function HelpDetailScreen() {
                     )}
 
                     {(help.status === "TAKEN" || help.status === "IN_PROGRESS") && (
-                        <TouchableOpacity
-                            style={[styles.actionButton, { backgroundColor: primary }]}
-                            onPress={handleOpenChat}
-                        >
-                            <ThemedText style={styles.actionText}>
-                                {help.role === "REQUESTER"
-                                    ? "Hubungi Relawan"
-                                    : "Hubungi Peminta Bantuan"}
-                            </ThemedText>
-                        </TouchableOpacity>
+                        <>
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.outlineButton, { borderColor: primary, marginBottom: 12, marginTop: 20 }]}
+                                onPress={handleOpenMaps}
+                            >
+                                <ThemedText style={[styles.outlineText, { color: primary }]}>
+                                    Navigasi ke Lokasi
+                                </ThemedText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: primary, marginTop: 0 }]}
+                                onPress={handleOpenChat}
+                            >
+                                <ThemedText style={styles.actionText}>
+                                    {help.role === "REQUESTER"
+                                        ? "Hubungi Relawan"
+                                        : "Hubungi Peminta Bantuan"}
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </>
                     )}
 
                     {help.permissions?.can_confirm && (
@@ -518,5 +553,36 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
         color: "#EF4444",
+    },
+    outlineButton: {
+        backgroundColor: "transparent",
+        borderWidth: 1,
+    },
+    outlineText: {
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    customMarker: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+    },
+    markerBubble: {
+        width: 32,
+        height: 32,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
 });
