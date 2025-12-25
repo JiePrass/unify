@@ -1,6 +1,6 @@
 const { io } = require("socket.io-client");
 
-const socket = io("http://localhost:2304", {
+const socket = io("https://unify-production-d351.up.railway.app", {
   auth: { 
     token :"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2MzAzNjQsImV4cCI6MTc2NjYzMzk2NH0.OCBhYV8OW4XwQl--438PTKoBZbiNU_lBCUMcV-n36tY"
   }

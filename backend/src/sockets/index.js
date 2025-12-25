@@ -8,6 +8,8 @@ let io;
     io = new Server(server, {
         cors: {
         origin: '*',
+        transports: ['websocket'],
+        allowEIO3: true,
         },
     });
 
