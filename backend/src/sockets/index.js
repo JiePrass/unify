@@ -7,7 +7,7 @@ let io;
     const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+        origin: '*',
         },
     });
 

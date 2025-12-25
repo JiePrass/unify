@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/themed-text";
@@ -53,6 +53,7 @@ export const getCategoryIcon = (category: string) => {
 
 export default function HelpDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
+    const router = useRouter();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const insets = useSafeAreaInsets();
 
@@ -132,6 +133,14 @@ export default function HelpDetailScreen() {
         }
     };
 
+    const handleOpenChat = () => {
+        router.push({
+            pathname: "/chat",
+            params: {
+                helpDetail: JSON.stringify(help),
+            },
+        });
+    };
 
     if (loading || !help) {
         return (
@@ -319,6 +328,19 @@ export default function HelpDetailScreen() {
                                     Ambil Bantuan
                                 </ThemedText>
                             )}
+                        </TouchableOpacity>
+                    )}
+
+                    {(help.status === "TAKEN" || help.status === "IN_PROGRESS") && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, { backgroundColor: primary }]}
+                            onPress={handleOpenChat}
+                        >
+                            <ThemedText style={styles.actionText}>
+                                {help.role === "REQUESTER"
+                                    ? "Hubungi Relawan"
+                                    : "Hubungi Peminta Bantuan"}
+                            </ThemedText>
                         </TouchableOpacity>
                     )}
 

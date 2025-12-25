@@ -13,6 +13,7 @@ interface User {
 }
 
 interface AuthContextType {
+    id: any;
     user: User | null;
     token: string | null;
     loading: boolean;
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     login: async () => { },
     logout: async () => { },
+    id: null
 });
 
 export const AuthProvider = ({ children }: any) => {
@@ -87,6 +89,7 @@ export const AuthProvider = ({ children }: any) => {
                 loading: initializing,
                 login,
                 logout,
+                id: user?.id || null
             }}
         >
             {children}
