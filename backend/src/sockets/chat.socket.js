@@ -17,7 +17,19 @@ const registerChatSocket = (io, socket) => {
       const roomName = `chat_${chatRoom.id}`;
       socket.join(roomName);
 
-      const messages = await chatService.getMessages(chatRoom.id);
+      const rawMessages = await chatService.getMessages(chatRoom.id);
+
+      const messages = rawMessages.map(m => ({
+        id: m.id,
+        sender_id: m.sender_id,
+        content: m.message,
+        created_at: m.created_at,
+      }));
+
+      socket.emit('join_success', {
+        chatRoomId: chatRoom.id,
+        messages,
+      });
 
       socket.emit('join_success', { chatRoomId: chatRoom.id, messages });
     } catch (err) {

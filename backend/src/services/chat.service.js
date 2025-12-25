@@ -63,12 +63,11 @@ exports.getMessages = (chatRoomId) => {
 
 
 exports.createMessage = async (chatRoomId, senderId, content) => {
-    console.log({ chatRoomId, senderId, content });
     return prisma.chatMessage.create({
         data: {
             chat_room_id: chatRoomId,
             sender_id: senderId,
-            content: content,
+            message: content,
         },
     });
 };

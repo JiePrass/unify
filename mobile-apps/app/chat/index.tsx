@@ -82,8 +82,6 @@ export default function ChatScreen() {
         };
     }, [help.id, userId, token]);
 
-    console.log(messages)
-
     /* ===================== HELPERS ===================== */
     const scrollToBottom = () => {
         listRef.current?.scrollToEnd({ animated: true });

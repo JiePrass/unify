@@ -4,7 +4,7 @@ const { io } = require("socket.io-client");
 
 const socket = io("http://localhost:2304", {
   auth: { 
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2NDA0MDQsImV4cCI6MTc2NjY0NDAwNH0.yuxWu35rHUaJCwV2tPgLgF0NmaLmpjiSIfSZqpjT-sA"
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2NDUxMzAsImV4cCI6MTc2NjY0ODczMH0.RomMCj-3IVTi3Z7R9xbQSm-yXC7Cq2Lv5uxhBwLkSsQ"
   }
 });
 
