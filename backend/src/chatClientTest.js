@@ -1,8 +1,10 @@
 const { io } = require("socket.io-client");
 
-const socket = io("https://unify-production-d351.up.railway.app", {
+// https://unify-production-d351.up.railway.app
+
+const socket = io("http://localhost:2304", {
   auth: { 
-    token :"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2MzAzNjQsImV4cCI6MTc2NjYzMzk2NH0.OCBhYV8OW4XwQl--438PTKoBZbiNU_lBCUMcV-n36tY"
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NjY2NDA0MDQsImV4cCI6MTc2NjY0NDAwNH0.yuxWu35rHUaJCwV2tPgLgF0NmaLmpjiSIfSZqpjT-sA"
   }
 });
 
@@ -11,7 +13,7 @@ socket.on("connect", () => {
   console.log("Connected:", socket.id);
 
   // Join chat setelah koneksi siap
-  socket.emit("join_chat", { userId: 1, helpId: 3 });
+  socket.emit("join_chat", { userId: 1, helpId: 8 });
 });
 
 // Join / error handlers

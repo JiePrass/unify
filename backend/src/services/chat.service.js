@@ -54,6 +54,14 @@ exports.canAccessRoom = async (userId, chatRoomId) => {
     return room.assignment.helper_id === userId || room.helpRequest.user_id === userId;
 };
 
+exports.getMessages = (chatRoomId) => {
+    return prisma.chatMessage.findMany({
+        where: { chat_room_id: chatRoomId },
+        orderBy: { created_at: 'asc' },
+    });
+};
+
+
 exports.createMessage = async (chatRoomId, senderId, content) => {
     console.log({ chatRoomId, senderId, content });
     return prisma.chatMessage.create({

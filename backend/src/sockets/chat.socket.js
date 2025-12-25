@@ -5,10 +5,8 @@ const registerChatSocket = (io, socket) => {
 
   // Join Chat Room
   socket.on('join_chat', async ({ userId, helpId }) => {
-    console.log(`Attempting to join chat: userId=${userId}, helpId=${helpId}`);
-
     try {
-      // Cari ChatRoom aktif untuk user ini (requester atau relawan)
+      // Cari ChatRoom aktif untuk user ini
       const chatRoom = await chatService.getChatRoomByHelpId(userId, helpId);
 
       if (!chatRoom) {
@@ -18,8 +16,10 @@ const registerChatSocket = (io, socket) => {
 
       const roomName = `chat_${chatRoom.id}`;
       socket.join(roomName);
-      socket.emit('join_success', { chatRoomId: chatRoom.id });
-      console.log(`User ${userId} joined room ${roomName}`);
+
+      const messages = await chatService.getMessages(chatRoom.id);
+
+      socket.emit('join_success', { chatRoomId: chatRoom.id, messages });
     } catch (err) {
       console.error(err);
       socket.emit('join_error', { message: 'Server error' });
@@ -30,7 +30,6 @@ const registerChatSocket = (io, socket) => {
   socket.on('send_message', async ({ userId, chatRoomId, content }) => {
     try {
       const canAccess = await chatService.canAccessRoom(userId, chatRoomId);
-      console.log('canAccessRoom result:', canAccess);
       if (!canAccess) {
         socket.emit('send_error', { message: 'Unauthorized to send message in this room' });
         return;
