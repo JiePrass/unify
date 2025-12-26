@@ -58,6 +58,12 @@ export const deleteHelpRequest = async (id: number | string): Promise<any> => {
     return res.data;
 };
 
+// GET HELP HISTORY
+export const getHelpHistory = async (): Promise<any> => {
+    const res = await axiosInstance.get('/help/history');
+    return res.data;
+};
+
 /**
  * =======================================
  * HELP ASSIGNMENT — RELAWAN

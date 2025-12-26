@@ -18,6 +18,9 @@ router.get("/nearby", helpController.getNearbyHelpRequests);
 // Mendapatkan bantuan aktif milik user
 router.get("/active", helpController.getMyActiveHelp);
 
+// Riwayat bantuan user
+router.get("/history", helpController.getHelpHistory);
+
 // Detail bantuan
 router.get("/:id", helpController.getHelpRequestById);
 

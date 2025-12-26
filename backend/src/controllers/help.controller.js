@@ -147,6 +147,19 @@ exports.getMyActiveHelp = async (req, res) => {
     }
 };
 
+exports.getHelpHistory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const result = await helpRequestService.getHelpHistory(userId);
+        return res.json({ success: true, data: result });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Gagal mengambil riwayat bantuan',
+        });
+    }
+};
+
 exports.deleteHelpRequest = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -216,3 +229,4 @@ exports.forceGraceCancel = async (req, res) => {
         return res.status(400).json({ success: false, message: err.message });
     }
 };
+

@@ -157,7 +157,7 @@ export default function HomeScreen() {
           <QuickAction
             icon="time"
             label="Riwayat"
-            onPress={() => Alert.alert('Info', 'Fitur belum tersedia')}
+            onPress={() => router.push('/help/history')}
           />
         </ThemedView>
 

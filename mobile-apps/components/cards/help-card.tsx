@@ -12,8 +12,10 @@ type HelpCardProps = {
         category: string;
         status: string;
         created_at: string;
+        distance_km?: number | null;
     };
     onPress?: () => void;
+    showStatusBadge?: boolean;
 };
 
 export const getCategoryIcon = (category: string) => {
@@ -50,7 +52,7 @@ const getStatusColor = (status: string, colors: any) => {
     }
 };
 
-export function HelpCard({ data, onPress }: HelpCardProps & { data: any }) {
+export function HelpCard({ data, onPress, showStatusBadge = false }: HelpCardProps) {
     const colorScheme = useColorScheme() ?? "light";
     const colors = Colors[colorScheme];
 
@@ -94,18 +96,20 @@ export function HelpCard({ data, onPress }: HelpCardProps & { data: any }) {
                     {/* Meta */}
                     <View style={styles.meta}>
                         {/* Status */}
-                        <View style={styles.metaItem}>
-                            <Ionicons
-                                name="ellipse"
-                                size={10}
-                                color={statusColor}
-                            />
-                            <ThemedText
-                                style={[styles.statusText, { color: statusColor }]}
-                            >
-                                {data.status}
-                            </ThemedText>
-                        </View>
+                        {showStatusBadge && (
+                            <View style={styles.metaItem}>
+                                <Ionicons
+                                    name="ellipse"
+                                    size={10}
+                                    color={statusColor}
+                                />
+                                <ThemedText
+                                    style={[styles.statusText, { color: statusColor }]}
+                                >
+                                    {data.status}
+                                </ThemedText>
+                            </View>
+                        )}
 
                         {/* Category */}
                         <ThemedText style={styles.badgeText}>

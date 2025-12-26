@@ -285,3 +285,79 @@ exports.deleteHelpRequest = async (userId, helpId) => {
         data: { deleted_at: new Date() }
     });
 };
+
+// HISTORY
+exports.getHelpHistory = async (userId) => {
+    try {
+        const HISTORY_STATUSES = ['COMPLETED', 'CANCELLED', 'TIMEOUT'];
+
+        const requesterHistory = await prisma.helpRequest.findMany({
+            where: {
+                user_id: userId,
+                status: { in: HISTORY_STATUSES },
+            },
+            include: {
+                assignments: {
+                    where: { status: 'COMPLETED' },
+                    take: 1,
+                    include: {
+                        helper: {
+                            select: { full_name: true, avatar_url: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        });
+
+        const helperHistory = await prisma.helpAssignment.findMany({
+            where: {
+                helper_id: userId,
+                status: { in: ['COMPLETED', 'FAILED'] },
+            },
+            include: {
+                helpRequest: {
+                    include: {
+                        user: {
+                            select: { full_name: true, avatar_url: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { taken_at: 'desc' },
+        });
+
+
+        // Normalize data
+        const normalizedRequester = requesterHistory.map(h => ({
+            id: h.id,
+            role: 'REQUESTER',
+            title: h.title,
+            status: h.status,
+            date: h.created_at,
+            category: h.category,
+            counterpart: h.assignments[0]?.helper ?? null, // Helper yang bantu (jika ada)
+        }));
+
+        const normalizedHelper = helperHistory.map(h => ({
+            id: h.helpRequest.id, // ID Help Request
+            assignment_id: h.id,
+            role: 'HELPER',
+            title: h.helpRequest.title,
+            status: h.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED', // Status assignment
+            date: h.taken_at,
+            category: h.helpRequest.category,
+            counterpart: h.helpRequest.user,
+        }));
+
+        // Menggabungkan dan mengurutkan
+        const combined = [...normalizedRequester, ...normalizedHelper].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
+
+        return combined;
+    } catch (error) {
+        console.error("Error in getHelpHistory:", error);
+        throw error;
+    }
+};
