@@ -70,7 +70,7 @@ exports.markFailed = async (assignmentId) => {
         data: { status: "CANCELLED" }
     });
 
-    chatService.closeChatRoom(assignment.id, tx)
+    chatService.closeChatRoom(assignment.id)
 
     return assignment;
 };

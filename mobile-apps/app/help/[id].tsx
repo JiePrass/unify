@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Linking,
     Platform,
+    Alert,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -16,8 +17,8 @@ import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { getHelpRequestById, takeHelpRequest, confirmHelper, cancelHelpRequest, markHelpCompleted, markHelpFailed } from "@/lib/api/help";
 import HeaderScreen from "@/components/header-screen";
-import { Ionicons } from "@expo/vector-icons";
-
+import Ionicons from "@expo/vector-icons/Ionicons";
+import CancelHelpModal from "@/components/modals/cancel-help-modal";
 
 const getStatusColor = (status: string, colors: any) => {
     switch (status.toUpperCase()) {
@@ -70,6 +71,7 @@ export default function HelpDetailScreen() {
     const snapPoints = useMemo(() => ["25%", "75%"], []);
 
     const [actionLoading, setActionLoading] = useState(false);
+    const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
     useEffect(() => {
         fetchHelp();
@@ -90,46 +92,73 @@ export default function HelpDetailScreen() {
             setActionLoading(true);
             await takeHelpRequest(help.id);
             fetchHelp(); // refresh status
+        } catch (err: any) {
+            Alert.alert("Gagal", "Tidak dapat mengambil bantuan. Pastikan Anda tidak memiliki bantuan aktif lain.");
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleConfirmHelp = async () => {
+        if (!help.assignment?.id) {
+            Alert.alert("Error", "Data assignment tidak valid.");
+            return;
+        }
         try {
             setActionLoading(true);
             await confirmHelper(help.id, help.assignment?.id);
             fetchHelp();
+        } catch (err: any) {
+            Alert.alert("Gagal", "Gagal mengonfirmasi relawan.");
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleCancelHelp = async () => {
+    const handleCancelHelp = async (reasonCode: string) => {
         try {
             setActionLoading(true);
-            await cancelHelpRequest(help.id);
+            await cancelHelpRequest(help.id, { reason_code: reasonCode });
+            setCancelModalVisible(false);
             fetchHelp();
+        } catch (err: any) {
+            Alert.alert("Gagal", "Gagal membatalkan bantuan.");
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const openCancelModal = () => {
+        setCancelModalVisible(true);
     };
 
     const handleCompleteHelp = async () => {
+        if (!help.assignment?.id) {
+            Alert.alert("Error", "Data assignment tidak valid/hilang.");
+            return;
+        }
         try {
             setActionLoading(true);
             await markHelpCompleted(help.assignment.id);
             fetchHelp();
+        } catch (err: any) {
+            Alert.alert("Gagal", "Gagal menyelesaikan bantuan.");
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleFailHelp = async () => {
+        if (!help.assignment?.id) {
+            Alert.alert("Error", "Data assignment tidak valid.");
+            return;
+        }
         try {
             setActionLoading(true);
             await markHelpFailed(help.assignment.id);
             fetchHelp();
+        } catch (err: any) {
+            Alert.alert("Gagal", "Gagal menandai bantuan gagal.");
         } finally {
             setActionLoading(false);
         }
@@ -431,7 +460,7 @@ export default function HelpDetailScreen() {
                         <TouchableOpacity
                             style={[styles.actionButton, styles.cancelButton]}
                             disabled={actionLoading}
-                            onPress={handleCancelHelp}
+                            onPress={openCancelModal}
                         >
                             {actionLoading ? (
                                 <ActivityIndicator color="#EF4444" />
@@ -445,6 +474,15 @@ export default function HelpDetailScreen() {
 
                 </BottomSheetView>
             </BottomSheet>
+
+            {/* CANCEL MODAL */}
+            <CancelHelpModal
+                visible={cancelModalVisible}
+                onClose={() => setCancelModalVisible(false)}
+                onConfirm={handleCancelHelp}
+                loading={actionLoading}
+                role={help?.role}
+            />
 
         </View>
     );
