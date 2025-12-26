@@ -248,7 +248,9 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
             });
         }
 
-        chatService.closeChatRoom(assignment.id, tx)
+        if (assignment) {
+            chatService.closeChatRoom(assignment.id, tx)
+        }
 
         return {
             actor,

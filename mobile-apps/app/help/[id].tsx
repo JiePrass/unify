@@ -94,6 +94,7 @@ export default function HelpDetailScreen() {
             fetchHelp(); // refresh status
         } catch (err: any) {
             Alert.alert("Gagal", "Tidak dapat mengambil bantuan. Pastikan Anda tidak memiliki bantuan aktif lain.");
+            console.error(err)
         } finally {
             setActionLoading(false);
         }
@@ -110,6 +111,7 @@ export default function HelpDetailScreen() {
             fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Gagal mengonfirmasi relawan.");
+            console.error(err)
         } finally {
             setActionLoading(false);
         }
@@ -123,6 +125,7 @@ export default function HelpDetailScreen() {
             fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Gagal membatalkan bantuan.");
+            console.error(err)
         } finally {
             setActionLoading(false);
         }
@@ -143,6 +146,7 @@ export default function HelpDetailScreen() {
             fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Gagal menyelesaikan bantuan.");
+            console.error(err)
         } finally {
             setActionLoading(false);
         }
@@ -159,6 +163,7 @@ export default function HelpDetailScreen() {
             fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Gagal menandai bantuan gagal.");
+            console.error(err)
         } finally {
             setActionLoading(false);
         }
