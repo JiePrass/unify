@@ -12,7 +12,10 @@ router.get('/missions', adminController.getAllMissions)
 router.get('/missions/:id', adminController.getMissionById)
 router.delete('/missions/:id', adminController.deleteMission)
 
+
 // ========= Cancel Help Report Routes =========
 router.get("/cancel-help", adminController.getCancelEvents);
+router.get("/cancel-help/:id", adminController.getCancelEventDetail);
+router.post("/execute-penalty/:id", adminController.executeCancelEventPenalty);
 
 module.exports = router;

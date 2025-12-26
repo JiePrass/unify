@@ -57,3 +57,50 @@ exports.getCancelEvents = async (req, res) => {
     }
 };
 
+exports.executeCancelEventPenalty = async (req, res) => {
+    try {
+        const cancelEventId = Number(req.params.id);
+        const adminId = req.user.id;
+        const { targetUserId, notes } = req.body || {};
+
+        const options = {
+            targetUserId: targetUserId ? Number(targetUserId) : null,
+            notes,
+        };
+
+        const result = await cancelEventService.executePenalty(
+            cancelEventId,
+            adminId,
+            options
+        );
+
+        return res.json({
+            success: true,
+            message: 'Penalty executed successfully',
+            data: result,
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+exports.getCancelEventDetail = async (req, res) => {
+    try {
+        const cancelEventId = Number(req.params.id);
+        const result = await cancelEventService.getCancelEventDetail(cancelEventId);
+
+        return res.json({
+            success: true,
+            data: result,
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+

@@ -336,15 +336,15 @@ exports.getHelpHistory = async (userId) => {
             status: h.status,
             date: h.created_at,
             category: h.category,
-            counterpart: h.assignments[0]?.helper ?? null, // Helper yang bantu (jika ada)
+            counterpart: h.assignments[0]?.helper ?? null,
         }));
 
         const normalizedHelper = helperHistory.map(h => ({
-            id: h.helpRequest.id, // ID Help Request
+            id: h.helpRequest.id,
             assignment_id: h.id,
             role: 'HELPER',
             title: h.helpRequest.title,
-            status: h.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED', // Status assignment
+            status: h.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
             date: h.taken_at,
             category: h.helpRequest.category,
             counterpart: h.helpRequest.user,
