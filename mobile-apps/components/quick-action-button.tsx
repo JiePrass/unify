@@ -6,9 +6,11 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 export default function QuickAction({
     icon,
     label,
+    onPress,
 }: {
     icon: keyof typeof Ionicons.glyphMap;
     label: string;
+    onPress?: () => void;
 }) {
     const primary = useThemeColor({}, "primary");
     const border = useThemeColor({}, "border");
@@ -22,6 +24,7 @@ export default function QuickAction({
                     stylesStatic.quickActionCircle,
                     { backgroundColor: card, borderColor: border },
                 ]}
+                onPress={onPress}
             >
                 <Ionicons name={icon} size={22} color={primary} />
             </TouchableOpacity>

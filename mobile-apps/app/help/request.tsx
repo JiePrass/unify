@@ -7,12 +7,14 @@ import {
     ActivityIndicator,
     Alert,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { Marker } from "react-native-maps";
+import { UnifiedMapView } from "@/components/unified-map-view";
 import * as Location from "expo-location";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useLocation } from "@/contexts/location-context";
 import HelpCategoryModal from "@/components/modals/help-category-modal";
 import { createHelpRequest } from "@/lib/api/help";
 import { ThemedText } from "@/components/themed-text";
@@ -64,32 +66,19 @@ export default function CreateHelpScreen() {
     const [category, setCategory] = useState("fisik");
     const [showCategoryModal, setShowCategoryModal] = useState(false);
 
+    const { location: initialLocation, loading: loadingContext } = useLocation();
+
     const [location, setLocation] = useState<UserLocation | null>(null);
-    const [loadingLocation, setLoadingLocation] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        (async () => {
-            try {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (status !== "granted") {
-                    Alert.alert("Izin lokasi ditolak");
-                    return;
-                }
-
-                const loc = await Location.getCurrentPositionAsync({});
-                setLocation({
-                    latitude: loc.coords.latitude,
-                    longitude: loc.coords.longitude,
-                });
-            } catch (err) {
-                Alert.alert("Gagal mendapatkan lokasi");
-                console.error("Location error:", err);
-            } finally {
-                setLoadingLocation(false);
-            }
-        })();
-    }, []);
+        if (initialLocation && !location) {
+            setLocation({
+                latitude: initialLocation.latitude,
+                longitude: initialLocation.longitude,
+            });
+        }
+    }, [initialLocation]);
 
     const isValid =
         title.trim().length > 0 &&
@@ -131,39 +120,28 @@ export default function CreateHelpScreen() {
             <HeaderScreen title="Minta Bantuan" />
 
             {/* MAP */}
-            <View style={styles.mapWrapper}>
-                {loadingLocation && (
-                    <View style={styles.mapSkeleton}>
-                        <Ionicons
-                            name="map"
-                            size={40}
-                            color={subText}
-                        />
-                        <ThemedText type="subtitle">
-                            Memuat peta…
-                        </ThemedText>
-                    </View>
-                )}
-
-                {location && (
-                    <MapView
-                        style={styles.map}
-                        initialRegion={{
+            <UnifiedMapView
+                loading={loadingContext && !location}
+                containerStyle={styles.mapWrapper}
+                style={styles.map}
+                initialRegion={
+                    location
+                        ? {
                             ...location,
                             latitudeDelta: 0.005,
                             longitudeDelta: 0.005,
-                        }}
-                    >
-                        <Marker
-                            coordinate={location}
-                            draggable
-                            onDragEnd={(e) =>
-                                setLocation(e.nativeEvent.coordinate)
-                            }
-                        />
-                    </MapView>
+                        }
+                        : undefined
+                }
+            >
+                {location && (
+                    <Marker
+                        coordinate={location}
+                        draggable
+                        onDragEnd={(e) => setLocation(e.nativeEvent.coordinate)}
+                    />
                 )}
-            </View>
+            </UnifiedMapView>
 
             {/* FORM */}
             <View style={styles.form}>
@@ -253,11 +231,6 @@ const styles = StyleSheet.create({
     map: {
         height: 220,
         width: "100%",
-    },
-    mapSkeleton: {
-        height: 220,
-        justifyContent: "center",
-        alignItems: "center",
     },
     form: {
         padding: 16,

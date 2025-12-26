@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocation } from '@/contexts/location-context';
@@ -14,7 +15,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
-import { getNearbyHelpRequests } from '@/lib/api/help';
+import { getNearbyHelpRequests, getMyActiveHelp } from '@/lib/api/help';
 import { HelpCard } from '@/components/cards/help-card';
 import { NearbyHelpState } from "@/components/nearby-help-state";
 import QuickAction from '@/components/quick-action-button';
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const { location, loading: locationLoading, refreshLocation } = useLocation();
 
   const [nearbyHelps, setNearbyHelps] = useState<any[]>([]);
+  const [activeHelpId, setActiveHelpId] = useState<number | null>(null);
   const [loadingHelp, setLoadingHelp] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -40,21 +42,29 @@ export default function HomeScreen() {
   const card = useThemeColor({}, 'card');
   const icon = useThemeColor({}, 'icon');
 
-  const fetchNearbyHelp = async () => {
+  const fetchData = async () => {
     if (!location) return;
     try {
       setLoadingHelp(true);
       const { latitude, longitude } = location;
 
-      const res = await getNearbyHelpRequests({
-        latitude,
-        longitude,
-        radius: 5000,
-      });
+      const [nearbyRes, activeRes] = await Promise.all([
+        getNearbyHelpRequests({
+          latitude,
+          longitude,
+          radius: 5000,
+        }),
+        getMyActiveHelp({
+          latitude,
+          longitude,
+          radius: 5000,
+        }),
+      ]);
 
-      setNearbyHelps(res.data ?? []);
+      setNearbyHelps(nearbyRes.data ?? []);
+      setActiveHelpId(activeRes.data?.help?.id ?? null);
     } catch (error) {
-      console.error('Failed fetch nearby help:', error);
+      console.error('Failed fetch data:', error);
     } finally {
       setLoadingHelp(false);
       setRefreshing(false);
@@ -63,7 +73,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (location) {
-      fetchNearbyHelp();
+      fetchData();
     } else if (!locationLoading && !location) {
       setLoadingHelp(false);
     }
@@ -72,7 +82,7 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshLocation();
-    if (location) await fetchNearbyHelp();
+    if (location) await fetchData();
     else setRefreshing(false);
   };
 
@@ -120,10 +130,35 @@ export default function HomeScreen() {
 
         {/* ================= Quick Actions ================= */}
         <ThemedView style={styles.quickActions}>
-          <QuickAction icon="hand-left" label="Bantuan Aktif" />
-          <QuickAction icon="megaphone" label="Minta Bantuan" />
-          <QuickAction icon="analytics" label="Progress Misi" />
-          <QuickAction icon="time" label="Riwayat" />
+          <QuickAction
+            icon="hand-left"
+            label="Bantuan Aktif"
+            onPress={() => {
+              if (activeHelpId) {
+                router.push({
+                  pathname: '/help/[id]',
+                  params: { id: activeHelpId },
+                });
+              } else {
+                Alert.alert('Info', 'Tidak ada bantuan aktif saat ini');
+              }
+            }}
+          />
+          <QuickAction
+            icon="megaphone"
+            label="Minta Bantuan"
+            onPress={() => router.push('/help/request')}
+          />
+          <QuickAction
+            icon="analytics"
+            label="Progress Misi"
+            onPress={() => Alert.alert('Info', 'Fitur belum tersedia')}
+          />
+          <QuickAction
+            icon="time"
+            label="Riwayat"
+            onPress={() => Alert.alert('Info', 'Fitur belum tersedia')}
+          />
         </ThemedView>
 
         {/* ================= Bantuan Terdekat ================= */}

@@ -8,7 +8,8 @@ import {
     ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, { Marker } from "react-native-maps";
+import { Marker } from "react-native-maps";
+import { UnifiedMapView } from "@/components/unified-map-view";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
@@ -40,8 +41,6 @@ export const getCategoryIcon = (category: string) => {
             return "help-circle";
     }
 };
-
-
 
 export default function HelpScreen() {
     const { user } = useAuth();
@@ -220,28 +219,18 @@ export default function HelpScreen() {
                 </ThemedView>
 
                 {/* ================= Map ================= */}
-                <View style={[styles.mapWrapper, { backgroundColor: card }]}>
-                    {loading || !location ? (
-                        <View style={styles.mapSkeleton}>
-                            <Ionicons
-                                name="map"
-                                size={40}
-                                color={subText}
-                            />
-                            <ThemedText type="subtitle">
-                                Memuat peta…
-                            </ThemedText>
-                        </View>
-                    ) : (
-                        <MapView
-                            style={StyleSheet.absoluteFill}
-                            initialRegion={{
-                                latitude: location.latitude,
-                                longitude: location.longitude,
-                                latitudeDelta: 0.03,
-                                longitudeDelta: 0.03,
-                            }}
-                        >
+                <UnifiedMapView
+                    loading={loading || !location}
+                    containerStyle={styles.mapWrapper}
+                    initialRegion={{
+                        latitude: location?.latitude ?? -6.2,
+                        longitude: location?.longitude ?? 106.8,
+                        latitudeDelta: 0.03,
+                        longitudeDelta: 0.03,
+                    }}
+                >
+                    {location && (
+                        <>
                             {/* USER MARKER */}
                             <Marker
                                 coordinate={location}
@@ -274,9 +263,9 @@ export default function HelpScreen() {
                                     </View>
                                 </Marker>
                             ))}
-                        </MapView>
+                        </>
                     )}
-                </View>
+                </UnifiedMapView>
 
                 {/* ================= List Bantuan Terdekat ================= */}
                 <ThemedView style={styles.listWrapper}>
@@ -380,12 +369,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         borderRadius: 16,
         overflow: "hidden",
-    },
-    mapSkeleton: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
     },
     listWrapper: {
         flex: 1,
