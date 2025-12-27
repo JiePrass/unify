@@ -49,6 +49,7 @@ app.use('/missions', require('./routes/missions.route'));
 app.use('/leaderboard', require('./routes/leaderboard.route'));
 app.use('/admin', require('./routes/admin.route'));
 app.use('/notifications', require('./routes/notification.route'));
+app.use('/badges', require('./routes/badge.route'));
 
 // ----------------------------------------------------
 // GLOBAL ERROR HANDLER
@@ -57,10 +58,20 @@ app.use((err, req, res, next) => {
   console.error('🔥 Global Error Handler:', err);
 
   if (err instanceof multer.MulterError) {
-    return res.status(400).json({ error: err.message });
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Ukuran file terlalu besar. Maksimal 5MB' 
+      });
+    }
+    return res.status(400).json({ 
+      success: false,
+      error: err.message 
+    });
   }
 
   return res.status(err.status || 500).json({
+    success: false,
     error: err.message || 'Internal Server Error',
   });
 });
