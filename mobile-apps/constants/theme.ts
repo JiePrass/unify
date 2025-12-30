@@ -6,7 +6,6 @@ export const Colors = {
     subText: "#5C6369",
     background: "#FFFFFF",
 
-    // BRIGHT SOFT ORANGE
     primary: "#FFBE7D",
     secondary: "#FFE1BC",
     tint: "#FF9A3C",

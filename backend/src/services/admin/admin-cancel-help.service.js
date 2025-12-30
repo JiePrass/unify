@@ -1,36 +1,62 @@
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
-exports.getCancelEventsForAdmin = async ({
+exports.getCancelHelpRequestForAdmin = async ({
     actor,
     stage,
     minViolationScore,
     from,
     to,
+    onlyPending,
 }) => {
-    return prisma.cancelEvent.findMany({
+    return prisma.cancelHelpRequest.findMany({
         where: {
-            actor: actor ?? undefined,
-            stage: stage ?? undefined,
-            violation_score: minViolationScore
-                ? { gte: minViolationScore }
-                : undefined,
-            created_at: {
-                gte: from ? new Date(from) : undefined,
-                lte: to ? new Date(to) : undefined,
-            },
+            ...(actor && {
+                actor,
+            }),
+
+            ...(stage && {
+                stage,
+            }),
+
+            ...(minViolationScore && {
+                violation_score: {
+                    gte: minViolationScore,
+                },
+            }),
+
+            ...((from || to) && {
+                created_at: {
+                    ...(from && { gte: new Date(from) }),
+                    ...(to && { lte: new Date(to) }),
+                },
+            }),
+
+            ...(onlyPending === true && {
+                penalty_executed: false,
+            }),
         },
+
         orderBy: {
             created_at: "desc",
         },
-        include: {
+
+        select: {
+            id: true,
+            actor: true,
+            stage: true,
+            violation_score: true,
+            created_at: true,
+            penalty_executed: true,
+            penalty_executed_at: true,
+
             actorUser: {
                 select: {
                     id: true,
                     full_name: true,
-                    reputation_score: true,
                 },
             },
+
             helpRequest: {
                 select: {
                     id: true,
@@ -38,23 +64,17 @@ exports.getCancelEventsForAdmin = async ({
                     status: true,
                 },
             },
-            assignment: {
-                select: {
-                    id: true,
-                    helper_id: true,
-                },
-            },
         },
     });
 };
 
-exports.executePenalty = async (cancelEventId, adminId, options = {}) => {
+exports.executePenalty = async (cancelHelpRequestId, adminId, options = {}) => {
     return prisma.$transaction(async (tx) => {
         const { targetUserId = null, notes = null } = options;
 
-        // 1. Get cancel event with user info
-        const cancelEvent = await tx.cancelEvent.findUnique({
-            where: { id: cancelEventId },
+        // 1. Fetch & validate cancel event
+        const cancelHelpRequest = await tx.cancelHelpRequest.findUnique({
+            where: { id: cancelHelpRequestId },
             include: {
                 actorUser: {
                     select: {
@@ -75,18 +95,21 @@ exports.executePenalty = async (cancelEventId, adminId, options = {}) => {
             },
         });
 
-        if (!cancelEvent) {
+        if (!cancelHelpRequest) {
             throw new Error('Cancel event not found');
         }
 
-        // 2. Determine target user
-        let userToPenalizeId = targetUserId || cancelEvent.actor_user_id;
+        if (cancelHelpRequest.penalty_executed) {
+            throw new Error('Penalty already executed for this cancel event');
+        }
+
+        const userToPenalizeId =
+            targetUserId ?? cancelHelpRequest.actor_user_id;
 
         if (!userToPenalizeId) {
             throw new Error('Cannot execute penalty: no target user');
         }
 
-        // Get target user's current reputation
         const targetUser = await tx.user.findUnique({
             where: { id: userToPenalizeId },
             select: { id: true, reputation_score: true },
@@ -96,67 +119,74 @@ exports.executePenalty = async (cancelEventId, adminId, options = {}) => {
             throw new Error('Target user not found');
         }
 
-        // 3. Calculate base penalty (weighted)
         const IMPACT_WEIGHT = 0.6;
         const VIOLATION_WEIGHT = 0.4;
-        const basePenalty = 
-            (cancelEvent.impact_score * IMPACT_WEIGHT) + 
-            (cancelEvent.violation_score * VIOLATION_WEIGHT);
 
-        // 4. Stage multiplier
+        const basePenalty =
+            (cancelHelpRequest.impact_score * IMPACT_WEIGHT) +
+            (cancelHelpRequest.violation_score * VIOLATION_WEIGHT);
+
         const stageMultipliers = {
             BEFORE_TAKEN: 1.0,
             AFTER_TAKEN: 1.5,
             AFTER_CONFIRMED: 2.0,
         };
-        const stageMultiplier = stageMultipliers[cancelEvent.stage] || 1.0;
 
-        // 5. Repeat offender multiplier (last 30 days)
+        const stageMultiplier =
+            stageMultipliers[cancelHelpRequest.stage] ?? 1.0;
+
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const recentCancelCount = await tx.cancelEvent.count({
+        const recentCancelCount = await tx.cancelHelpRequest.count({
             where: {
                 actor_user_id: userToPenalizeId,
                 created_at: { gte: thirtyDaysAgo },
-                id: { not: cancelEventId },
+                penalty_executed: true,
+                id: { not: cancelHelpRequestId },
             },
         });
 
         const repeatMultiplier = 1.0 + (recentCancelCount * 0.2);
 
-        // 6. Calculate final penalty
-        const finalPenalty = Math.round(basePenalty * stageMultiplier * repeatMultiplier);
+        const finalPenalty = Math.round(
+            basePenalty * stageMultiplier * repeatMultiplier
+        );
 
-        // 7. Update user reputation (ENFORCE 0-100 BOUNDS)
-        const currentReputation = targetUser.reputation_score;
-        const newReputation = Math.max(0, Math.min(100, currentReputation - finalPenalty));
+        const newReputation = Math.max(
+            0,
+            Math.min(100, targetUser.reputation_score - finalPenalty)
+        );
 
         await tx.user.update({
             where: { id: userToPenalizeId },
             data: { reputation_score: newReputation },
         });
 
-        // 8. Create audit log
-        const penaltyDetails = {
-            cancel_event_id: cancelEventId,
-            actor_user_id: cancelEvent.actor_user_id,
-            penalized_user_id: userToPenalizeId,
-            is_override: targetUserId !== null,
-            admin_notes: notes,
-            base_penalty: basePenalty,
-            stage_multiplier: stageMultiplier,
-            repeat_multiplier: repeatMultiplier,
-            final_penalty: finalPenalty,
-            old_reputation: currentReputation,
-            new_reputation: newReputation,
-        };
+        // 8. Mark cancel event as executed (CRITICAL)
+        await tx.cancelHelpRequest.update({
+            where: { id: cancelHelpRequestId },
+            data: {
+                penalty_executed: true,
+                penalty_executed_at: new Date(),
+                penalty_executed_by: adminId,
+            },
+        });
 
+        // 9. Audit log
         await tx.auditLog.create({
             data: {
                 admin_id: adminId,
                 action: 'EXECUTE_CANCEL_PENALTY',
-                metadata: JSON.stringify(penaltyDetails),
+                metadata: JSON.stringify({
+                    cancel_event_id: cancelHelpRequestId,
+                    penalized_user_id: userToPenalizeId,
+                    final_penalty: finalPenalty,
+                    old_reputation: targetUser.reputation_score,
+                    new_reputation: newReputation,
+                    is_override: targetUserId !== null,
+                    notes,
+                }),
             },
         });
 
@@ -164,16 +194,15 @@ exports.executePenalty = async (cancelEventId, adminId, options = {}) => {
             success: true,
             penalty_applied: finalPenalty,
             penalized_user_id: userToPenalizeId,
-            old_reputation: currentReputation,
+            old_reputation: targetUser.reputation_score,
             new_reputation: newReputation,
-            breakdown: penaltyDetails,
         };
     });
 };
 
-exports.getCancelEventDetail = async (cancelEventId) => {
-    const cancelEvent = await prisma.cancelEvent.findUnique({
-        where: { id: cancelEventId },
+exports.getCancelHelpRequestDetail = async (cancelHelpRequestId) => {
+    const cancelHelpRequest = await prisma.cancelHelpRequest.findUnique({
+        where: { id: cancelHelpRequestId },
         include: {
             actorUser: {
                 select: {
@@ -181,6 +210,13 @@ exports.getCancelEventDetail = async (cancelEventId) => {
                     full_name: true,
                     email: true,
                     reputation_score: true,
+                },
+            },
+            penaltyExecutedBy: {
+                select: {
+                    id: true,
+                    full_name: true,
+                    email: true,
                 },
             },
             helpRequest: {
@@ -216,14 +252,14 @@ exports.getCancelEventDetail = async (cancelEventId) => {
         },
     });
 
-    if (!cancelEvent) {
-        throw new Error('Cancel event not found');
+    if (!cancelHelpRequest) {
+        throw new Error('Cancel Help Request not found');
     }
 
     let chatHistory = [];
-    if (cancelEvent.assignment_id) {
+    if (cancelHelpRequest.assignment_id) {
         const chatRoom = await prisma.chatRoom.findUnique({
-            where: { assignment_id: cancelEvent.assignment_id },
+            where: { assignment_id: cancelHelpRequest.assignment_id },
             include: {
                 messages: {
                     include: {
@@ -243,7 +279,7 @@ exports.getCancelEventDetail = async (cancelEventId) => {
             chatHistory = chatRoom.messages.map(msg => ({
                 sender_id: msg.sender_id,
                 sender_name: msg.sender.full_name,
-                role: msg.sender_id === cancelEvent.helpRequest.user_id ? 'REQUESTER' : 'HELPER',
+                role: msg.sender_id === cancelHelpRequest.helpRequest.user_id ? 'REQUESTER' : 'HELPER',
                 message: msg.message,
                 created_at: msg.created_at,
             }));
@@ -253,20 +289,20 @@ exports.getCancelEventDetail = async (cancelEventId) => {
     const timeline = [];
     timeline.push({
         event: 'REQUEST_CREATED',
-        timestamp: cancelEvent.helpRequest.created_at,
+        timestamp: cancelHelpRequest.helpRequest.created_at,
     });
 
-    if (cancelEvent.assignment) {
-        if (cancelEvent.assignment.taken_at) {
+    if (cancelHelpRequest.assignment) {
+        if (cancelHelpRequest.assignment.taken_at) {
             timeline.push({
                 event: 'HELP_TAKEN',
-                timestamp: cancelEvent.assignment.taken_at,
+                timestamp: cancelHelpRequest.assignment.taken_at,
             });
         }
-        if (cancelEvent.assignment.confirmed_at) {
+        if (cancelHelpRequest.assignment.confirmed_at) {
             timeline.push({
                 event: 'HELP_CONFIRMED',
-                timestamp: cancelEvent.assignment.confirmed_at,
+                timestamp: cancelHelpRequest.assignment.confirmed_at,
             });
         }
     }
@@ -291,26 +327,29 @@ exports.getCancelEventDetail = async (cancelEventId) => {
 
     timeline.push({
         event: 'HELP_CANCELLED',
-        timestamp: cancelEvent.created_at,
+        timestamp: cancelHelpRequest.created_at,
     });
 
     timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     return {
-        cancelEvent: {
-            id: cancelEvent.id,
-            actor: cancelEvent.actor,
-            reason_code: cancelEvent.reason_code,
-            reason_text: cancelEvent.reason_text,
-            stage: cancelEvent.stage,
-            impact_score: cancelEvent.impact_score,
-            violation_score: cancelEvent.violation_score,
-            created_at: cancelEvent.created_at,
+        cancelHelpRequest: {
+            id: cancelHelpRequest.id,
+            actor: cancelHelpRequest.actor,
+            reason_code: cancelHelpRequest.reason_code,
+            reason_text: cancelHelpRequest.reason_text,
+            stage: cancelHelpRequest.stage,
+            impact_score: cancelHelpRequest.impact_score,
+            violation_score: cancelHelpRequest.violation_score,
+            created_at: cancelHelpRequest.created_at,
+            penalty_executed: cancelHelpRequest.penalty_executed,
+            penalty_executed_at: cancelHelpRequest.penalty_executed_at,
+            penalty_executed_by: cancelHelpRequest.penaltyExecutedBy ?? null,
         },
-        actorUser: cancelEvent.actorUser,
-        helpRequest: cancelEvent.helpRequest,
-        assignment: cancelEvent.assignment,
-        helperUser: cancelEvent.assignment?.helper || null,
+        actorUser: cancelHelpRequest.actorUser,
+        helpRequest: cancelHelpRequest.helpRequest,
+        assignment: cancelHelpRequest.assignment,
+        helperUser: cancelHelpRequest.assignment?.helper || null,
         chatHistory,
         timeline,
     };

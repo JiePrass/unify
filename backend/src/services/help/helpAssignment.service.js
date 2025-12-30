@@ -207,7 +207,7 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
 
     // ===== TRANSACTION =====
     return prisma.$transaction(async (tx) => {
-        await tx.cancelEvent.create({
+        await tx.cancelHelpRequest.create({
             data: {
                 help_request_id: help.id,
                 assignment_id: assignment?.id,

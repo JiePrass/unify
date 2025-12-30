@@ -1,7 +1,11 @@
+import HeroSection from "@/components/landing/hero";
+import Header from "@/components/layouts/header";
+
 export default function Home() {
   return (
-    <div>
-      <h1>Unify</h1>
-    </div>
+    <>
+      <Header />
+      <HeroSection />
+    </>
   );
 }

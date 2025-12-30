@@ -31,7 +31,6 @@ const registerChatSocket = (io, socket) => {
         messages,
       });
 
-      socket.emit('join_success', { chatRoomId: chatRoom.id, messages });
     } catch (err) {
       console.error(err);
       socket.emit('join_error', { message: 'Server error' });

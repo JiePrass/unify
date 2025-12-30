@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import localFont from "next/font/local";
+import { AuthProvider } from "@/contexts/auth-context";
 
 const sfPro = localFont({
   src: [
@@ -31,11 +32,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${sfPro.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <AuthProvider>
+        <body
+          className={`${sfPro.variable} antialiased`}
+        >
+          {children}
+        </body>
+      </AuthProvider>
     </html>
   );
 }

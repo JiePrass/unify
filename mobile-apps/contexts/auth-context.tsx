@@ -7,8 +7,6 @@ interface User {
     name: string;
     email: string;
     phone?: string;
-    address?: string;
-    education?: string;
     [key: string]: any;
 }
 

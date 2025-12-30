@@ -6,6 +6,9 @@ const requireRole = require("../middlewares/requireRole");
 router.use(requireLogin);
 router.use(requireRole("ADMIN"));
 
+// ========= Dashboard Admin =========
+router.get("/", adminController.getDashboardData)
+
 // ========= Missions Management Routes =========
 router.post('/missions', adminController.createMission)
 router.get('/missions', adminController.getAllMissions)
@@ -14,8 +17,8 @@ router.delete('/missions/:id', adminController.deleteMission)
 
 
 // ========= Cancel Help Report Routes =========
-router.get("/cancel-help", adminController.getCancelEvents);
-router.get("/cancel-help/:id", adminController.getCancelEventDetail);
-router.post("/execute-penalty/:id", adminController.executeCancelEventPenalty);
+router.get("/cancel-help", adminController.getCancelHelpRequest);
+router.get("/cancel-help/:id", adminController.getCancelHelpRequestDetail);
+router.post("/execute-penalty/:id", adminController.executeCancelHelpRequestPenalty);
 
 module.exports = router;

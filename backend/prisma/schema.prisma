@@ -106,7 +106,8 @@ model User {
   reportsReceived  Report[]         @relation("ReportsToUser")
   chatMessages     ChatMessage[]
   auditLogs        AuditLog[]
-  cancelEvents     CancelEvent[]
+  cancelHelpRequestsAsActor   CancelHelpRequest[] @relation("CancelActorUser")
+  cancelHelpRequestsExecuted  CancelHelpRequest[] @relation("CancelPenaltyExecutor")
 
   emailTokens      EmailToken[]
 }
@@ -132,7 +133,7 @@ model HelpRequest {
   reports          Report[]
   chatRooms        ChatRoom[]
 
-  cancelEvents     CancelEvent[]
+  cancelHelpRequests     CancelHelpRequest[]
 }
   
 model HelpAssignment {
@@ -150,7 +151,7 @@ model HelpAssignment {
   helpRequest      HelpRequest      @relation(fields: [help_request_id], references: [id])
   helper           User             @relation(fields: [helper_id], references: [id])
 
-  cancelEvents     CancelEvent[]
+  cancelHelpRequests     CancelHelpRequest[]
 }
 
 model Notification {
@@ -226,7 +227,7 @@ model Report {
   helpRequest      HelpRequest?   @relation(fields: [help_request_id], references: [id])
 }
 
-model CancelEvent {
+model CancelHelpRequest {
   id               Int          @id @default(autoincrement())
   help_request_id  Int
   assignment_id    Int?
@@ -239,10 +240,18 @@ model CancelEvent {
   violation_score  Int
   created_at       DateTime     @default(now())
 
+  penalty_executed     Boolean   @default(false)
+  penalty_executed_at  DateTime?
+  penalty_executed_by  Int?
+
   helpRequest      HelpRequest  @relation(fields: [help_request_id], references: [id])
   assignment       HelpAssignment? @relation(fields: [assignment_id], references: [id])
-  actorUser        User?        @relation(fields: [actor_user_id], references: [id])
+
+  actorUser        User? @relation("CancelActorUser", fields: [actor_user_id], references: [id])
+
+  penaltyExecutedBy User? @relation("CancelPenaltyExecutor", fields: [penalty_executed_by], references: [id])
 }
+
 
 
 model AuditLog {

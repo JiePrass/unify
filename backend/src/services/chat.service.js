@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-exports.createChatRoom = async (assignmentId, tx = prisma) => {
+exports.createChatRoomTx = async (tx, assignmentId) => {
     const assignment = await tx.helpAssignment.findUnique({
         where: { id: assignmentId },
     });
@@ -14,12 +14,17 @@ exports.createChatRoom = async (assignmentId, tx = prisma) => {
 
     return tx.chatRoom.create({
         data: {
-        help_request_id: assignment.help_request_id,
-        assignment_id: assignment.id,
-        is_active: true,
+            help_request_id: assignment.help_request_id,
+            assignment_id: assignment.id,
+            is_active: true,
         },
     });
 };
+
+exports.createChatRoom = async (assignmentId) => {
+    return exports.createChatRoomTx(prisma, assignmentId);
+};
+
 
 exports.getChatRoom = async (chatRoomId) => {
     return prisma.chatRoom.findUnique({
@@ -72,15 +77,28 @@ exports.createMessage = async (chatRoomId, senderId, content) => {
     });
 };
 
-exports.closeChatRoom = async (assignmentId, tx = prisma) => {
+exports.closeChatRoomTx = async (tx, assignmentId) => {
     return tx.chatRoom.updateMany({
         where: {
-        assignment_id: assignmentId,
-        is_active: true,
+            assignment_id: assignmentId,
+            is_active: true,
         },
         data: {
-        is_active: false,
-        closed_at: new Date(),
+            is_active: false,
+            closed_at: new Date(),
+        },
+    });
+};
+
+exports.closeChatRoom = async (assignmentId) => {
+    return prisma.chatRoom.updateMany({
+        where: {
+            assignment_id: assignmentId,
+            is_active: true,
+        },
+        data: {
+            is_active: false,
+            closed_at: new Date(),
         },
     });
 };

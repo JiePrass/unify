@@ -1,5 +1,6 @@
 const missionService = require('../services/admin/admin-missions.service')
-const cancelEventService = require('../services/admin/admin-report.service')
+const cancelHelpRequestService = require('../services/admin/admin-cancel-help.service')
+const dashboardService = require ('../services/admin/admin-dashboard.service')
 
 // ======================== Missions Management ========================
 exports.createMission = async (req, res) => {
@@ -25,7 +26,7 @@ exports.deleteMission = async (req, res) => {
 }
 
 // ======================== Cancel Events Report ========================
-exports.getCancelEvents = async (req, res) => {
+exports.getCancelHelpRequest = async (req, res) => {
     try {
         const {
             actor,
@@ -33,17 +34,27 @@ exports.getCancelEvents = async (req, res) => {
             minViolationScore,
             from,
             to,
+            onlyPending,
         } = req.query;
 
-        const data = await cancelEventService.getCancelEventsForAdmin({
-            actor,
-            stage,
-            minViolationScore: minViolationScore
-                ? Number(minViolationScore)
-                : undefined,
-            from,
-            to,
-        });
+        const parsedOnlyPending =
+            onlyPending === "true"
+                ? true
+                : onlyPending === "false"
+                ? false
+                : undefined;
+
+        const data =
+            await cancelHelpRequestService.getCancelHelpRequestForAdmin({
+                actor,
+                stage,
+                minViolationScore: minViolationScore
+                    ? Number(minViolationScore)
+                    : undefined,
+                from,
+                to,
+                onlyPending: parsedOnlyPending,
+            });
 
         return res.json({
             success: true,
@@ -57,9 +68,10 @@ exports.getCancelEvents = async (req, res) => {
     }
 };
 
-exports.executeCancelEventPenalty = async (req, res) => {
+
+exports.executeCancelHelpRequestPenalty = async (req, res) => {
     try {
-        const cancelEventId = Number(req.params.id);
+        const cancelHelpRequestId = Number(req.params.id);
         const adminId = req.user.id;
         const { targetUserId, notes } = req.body || {};
 
@@ -68,8 +80,8 @@ exports.executeCancelEventPenalty = async (req, res) => {
             notes,
         };
 
-        const result = await cancelEventService.executePenalty(
-            cancelEventId,
+        const result = await cancelHelpRequestService.executePenalty(
+            cancelHelpRequestId,
             adminId,
             options
         );
@@ -87,10 +99,10 @@ exports.executeCancelEventPenalty = async (req, res) => {
     }
 };
 
-exports.getCancelEventDetail = async (req, res) => {
+exports.getCancelHelpRequestDetail = async (req, res) => {
     try {
-        const cancelEventId = Number(req.params.id);
-        const result = await cancelEventService.getCancelEventDetail(cancelEventId);
+        const cancelHelpRequestId = Number(req.params.id);
+        const result = await cancelHelpRequestService.getCancelHelpRequestDetail(cancelHelpRequestId);
 
         return res.json({
             success: true,
@@ -104,3 +116,24 @@ exports.getCancelEventDetail = async (req, res) => {
     }
 };
 
+// ======================== DASHBOARD ========================
+exports.getDashboardData = async (req, res) => {
+    try {
+        const year = req.query.year
+            ? Number(req.query.year)
+            : new Date().getFullYear();
+
+        const data =
+            await dashboardService.getDashboardData(year);
+
+        return res.json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
