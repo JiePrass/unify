@@ -21,6 +21,19 @@ exports.getUserMissions = async (userId) => {
     })
 }
 
+exports.getMissionById = async (missionId, userId) =>{
+    return prisma.userMission.findFirst({
+        where: {user_id : userId, mission_id: missionId},
+            include: {
+            mission: {
+                include: {
+                    rewardBadge: true,
+                },
+            },
+        },
+    })
+}
+
 /**
  * Assign all missions ke user
  * dipanggil saat register / login pertama

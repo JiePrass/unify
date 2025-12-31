@@ -1,25 +1,25 @@
+import { MissionCard } from "@/components/cards/mission-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/auth-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { getUserMissions } from "@/lib/api/mission";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Pressable,
-  StyleSheet,
   ActivityIndicator,
-  View,
-  Image,
   FlatList,
-  RefreshControl
+  Image,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View
 } from "react-native";
-import { router } from "expo-router";
-import { useThemeColor } from "@/hooks/use-theme-color";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useAuth } from "@/contexts/auth-context";
-import { MissionCard } from "@/components/cards/mission-card";
-import { getUserMissions } from "@/lib/api/mission";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MissionScreen() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   const primary = useThemeColor({}, 'primary');
   const background = useThemeColor({}, 'background');
@@ -143,6 +143,7 @@ export default function MissionScreen() {
           }
           renderItem={({ item }) => (
             <MissionCard
+              id={item.mission.id}
               title={item.mission.title}
               description={item.mission.description}
               category={item.mission.category}

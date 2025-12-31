@@ -1,10 +1,12 @@
-import { View, StyleSheet, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Colors } from "@/constants/theme";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
+import { router } from "expo-router";
+import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 type MissionCardProps = {
+    id: string;
     title: string;
     description: string;
     category: string;
@@ -26,6 +28,7 @@ const getCategoryIcon = (category: string) => {
 };
 
 export function MissionCard({
+    id,
     title,
     description,
     category,
@@ -40,7 +43,7 @@ export function MissionCard({
     const progressPercent = Math.min(progress / target, 1);
 
     return (
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
+        <Pressable onPress={() => router.push(`/mission/${id}`)} style={[styles.card, { backgroundColor: theme.card }]}>
             {/* Left Icon (centered) */}
             <View style={styles.iconWrapper}>
                 <View
@@ -111,7 +114,7 @@ export function MissionCard({
                     />
                 </View>
             </View>
-        </View>
+        </Pressable>
     );
 }
 
