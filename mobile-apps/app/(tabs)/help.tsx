@@ -174,7 +174,7 @@ export default function HelpScreen() {
                                 borderColor: border,
                             },
                         ]}
-                        onPress={() => router.push("/")}
+                        onPress={() => router.push("/help/history")}
                     >
                         <Ionicons
                             name="time"
