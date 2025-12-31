@@ -12,7 +12,12 @@ exports.takeHelpRequest = async (req, res) => {
         const assignment = await helpAssignmentService.takeHelpRequest(helperId, helpRequestId);
         return res.status(201).json({ success: true, data: assignment });
     } catch (err) {
-        return res.status(400).json({ success: false, message: err.message });
+        
+            const status = err.status || 500;
+    return res.status(status).json({
+        success: false,
+        message: err.message || "Internal server error",
+    });
     }
 };
 

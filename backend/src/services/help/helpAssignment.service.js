@@ -59,7 +59,7 @@ exports.takeHelpRequest = async (helperId, helpRequestId) => {
             },
         });
 
-        await chatService.createChatRoom(assignment.id, tx);
+        await chatService.createChatRoomTx(tx, assignment.id);
 
         await missionService.updateMissionProgress(
             helperId,

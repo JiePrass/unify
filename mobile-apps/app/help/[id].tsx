@@ -91,7 +91,7 @@ export default function HelpDetailScreen() {
         try {
             setActionLoading(true);
             await takeHelpRequest(help.id);
-            fetchHelp(); // refresh status
+            fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Tidak dapat mengambil bantuan. Pastikan Anda tidak memiliki bantuan aktif lain.");
             console.error(err)

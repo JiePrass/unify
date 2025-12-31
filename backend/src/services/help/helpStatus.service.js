@@ -41,7 +41,7 @@ exports.markCompleted = async (assignmentId, helperId) => {
             data: { status: 'COMPLETED' },
         });
 
-        chatService.closeChatRoom(assignment.id, tx)
+        await chatService.closeChatRoomTx(tx, assignment.id)
 
         // ===== REPUTATION REWARD SYSTEM =====
         const category = assignment.helpRequest.category;
