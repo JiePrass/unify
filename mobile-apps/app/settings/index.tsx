@@ -54,14 +54,9 @@ export default function SettingsScreen() {
                         onPress={() => router.push("/settings/edit-profile")}
                     />
                     <SettingsItem
-                        icon="lock-closed-outline"
-                        label="Keamanan"
-                        onPress={() => router.push("/")}
-                    />
-                    <SettingsItem
                         icon="notifications-outline"
                         label="Notifikasi"
-                        onPress={() => router.push("/")}
+                        onPress={() => router.push("/notification")}
                     />
                 </SettingsSection>
 
@@ -71,12 +66,6 @@ export default function SettingsScreen() {
                         label="Logout"
                         danger
                         onPress={handleLogout}
-                    />
-                    <SettingsItem
-                        icon="trash-outline"
-                        label="Nonaktifkan Akun"
-                        danger
-                        onPress={() => router.push("/")}
                     />
                 </SettingsSection>
 
