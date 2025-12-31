@@ -1,14 +1,14 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-exports.createNotification = async (userId, title, message, type, refId = null) => {
-    return prisma.notification.create({
+exports.createNotification = async (user_id, title, body, type, tx = null) => {
+    const client = tx || prisma;
+    return client.notification.create({
         data: {
-            userId,
+            user_id,
             title,
-            message,
-            type,
-            refId
+            body,
+            type
         }
     });
 };
@@ -16,69 +16,66 @@ exports.createNotification = async (userId, title, message, type, refId = null) 
 exports.notifyHelpTaken = async (requesterId, helpRequestId) => {
     return prisma.notification.create({
         data: {
-            userId: requesterId,
+            user_id: requesterId,
             title: "Permintaan Bantuan Diambil",
-            message: "Seorang relawan telah mengambil permintaan bantuan Anda.",
-            type: "HELP",
-            refId: helpRequestId
+            body: "Seorang relawan telah mengambil permintaan bantuan Anda.",
+            type: "HELP"
         }
     });
 };
 
-exports.notifyMissionComplete = async (userId, missionId) => {
+exports.notifyMissionComplete = async (user_id, missionId) => {
     return prisma.notification.create({
         data: {
-            userId,
+            user_id,
             title: "Misi Selesai",
-            message: "Anda telah menyelesaikan sebuah misi. Klaim hadiah Anda.",
-            type: "MISSION",
-            refId: missionId
+            body: "Anda telah menyelesaikan sebuah misi. Klaim hadiah Anda.",
+            type: "MISSION"
         }
     });
 };
 
-exports.notifyNewBadge = async (userId, badgeId) => {
+exports.notifyNewBadge = async (user_id, badgeId) => {
     return prisma.notification.create({
         data: {
-            userId,
+            user_id,
             title: "Badge Baru",
-            message: "Anda mendapatkan badge baru.",
-            type: "BADGE",
-            refId: badgeId
+            body: "Anda mendapatkan badge baru.",
+            type: "BADGE"
         }
     });
 };
 
-exports.getUserNotifications = async (userId) => {
+exports.getUserNotifications = async (user_id) => {
     return prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' }
+        where: { user_id },
+        orderBy: { created_at: 'desc' }
     });
 };
 
-exports.countUnreadNotifications = async (userId) => {
+exports.countUnreadNotifications = async (user_id) => {
     return prisma.notification.count({
-        where: { userId, isRead: false }
+        where: { user_id, is_read: false }
     });
 };
 
-exports.markAsRead = async (id, userId) => {
+exports.markAsRead = async (id, user_id) => {
     return prisma.notification.updateMany({
-        where: { id, userId },
-        data: { isRead: true }
+        where: { id, user_id },
+        data: { is_read: true }
     });
 };
 
-exports.markAllAsRead = async (userId) => {
+exports.markAllAsRead = async (user_id) => {
     return prisma.notification.updateMany({
-        where: { userId, isRead: false },
-        data: { isRead: true }
+        where: { user_id, is_read: false },
+        data: { is_read: true }
     });
 };
 
-exports.deleteNotification = async (id, userId) => {
+exports.deleteNotification = async (id, user_id) => {
     return prisma.notification.deleteMany({
-        where: { id, userId }
+        where: { id, user_id }
     });
 };
 
@@ -88,8 +85,8 @@ exports.deleteOldReadNotifications = async () => {
 
     return prisma.notification.deleteMany({
         where: {
-            isRead: true,
-            createdAt: { lt: threshold }
+            is_read: true,
+            created_at: { lt: threshold }
         }
     });
 };

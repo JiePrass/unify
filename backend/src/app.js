@@ -4,10 +4,9 @@ require('./cron/notification.cron');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const { PrismaClient } = require('@prisma/client');
-
 const app = express();
-const prisma = new PrismaClient();
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 // ----------------------------------------------------
 // CORS

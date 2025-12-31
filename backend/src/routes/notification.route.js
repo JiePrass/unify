@@ -10,5 +10,4 @@ router.patch('/:id/read', notificationController.read);
 router.patch('/read-all', notificationController.readAll);
 router.delete('/:id', notificationController.delete);
 
-
 module.exports = router;

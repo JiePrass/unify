@@ -88,13 +88,39 @@ exports.getMessages = (chatRoomId) => {
 
 
 exports.createMessage = async (chatRoomId, senderId, content) => {
-    return prisma.chatMessage.create({
+    const message = await prisma.chatMessage.create({
         data: {
             chat_room_id: chatRoomId,
             sender_id: senderId,
             message: content,
         },
     });
+
+    // Notify recipient
+    const room = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId },
+        include: {
+            assignment: true,
+            helpRequest: true,
+        },
+    });
+
+    if (room) {
+        const receiverId = senderId === room.assignment.helper_id 
+            ? room.helpRequest.user_id 
+            : room.assignment.helper_id;
+
+        await prisma.notification.create({
+            data: {
+                user_id: receiverId,
+                title: "Pesan Baru",
+                body: `Anda menerima pesan baru terkait bantuan "${room.helpRequest.title}"`,
+                type: "CHAT"
+            }
+        });
+    }
+
+    return message;
 };
 
 exports.closeChatRoomTx = async (tx, assignmentId) => {

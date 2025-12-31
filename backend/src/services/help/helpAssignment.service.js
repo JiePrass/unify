@@ -1,8 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
-const { CancelActor, CancelStage, CancelReasonCode } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { CancelActor, CancelStage, CancelReasonCode } = require('@prisma/client');
 const chatService = require('../chat.service');
 const missionService = require('../missions.service');
+const notificationService = require('../notification.service');
 
 exports.takeHelpRequest = async (helperId, helpRequestId) => {
     return prisma.$transaction(async (tx) => {
@@ -68,6 +69,15 @@ exports.takeHelpRequest = async (helperId, helpRequestId) => {
             tx
         );
 
+        await tx.notification.create({
+            data: {
+                user_id: help.user_id,
+                title: "Permintaan Bantuan Diambil",
+                body: "Seorang relawan telah mengambil permintaan bantuan Anda.",
+                type: "HELP"
+            }
+        });
+
         return assignment;
     });
 };
@@ -98,7 +108,7 @@ exports.confirmHelper = async (helpRequestId, assignmentId, requesterId) => {
 
         const assignment = await tx.helpAssignment.findUnique({
             where: { id: assignmentId },
-            select: { id: true, help_request_id: true, status: true },
+            select: { id: true, help_request_id: true, status: true, helper_id: true },
         });
 
         if (!assignment || assignment.help_request_id !== helpRequestId) {
@@ -112,6 +122,11 @@ exports.confirmHelper = async (helpRequestId, assignmentId, requesterId) => {
             };
         }
 
+        await tx.helpRequest.update({
+            where: { id: helpRequestId },
+            data: { status: 'IN_PROGRESS' },
+        });
+
         await tx.helpAssignment.update({
             where: { id: assignmentId },
             data: {
@@ -120,9 +135,13 @@ exports.confirmHelper = async (helpRequestId, assignmentId, requesterId) => {
             },
         });
 
-        await tx.helpRequest.update({
-            where: { id: helpRequestId },
-            data: { status: 'IN_PROGRESS' },
+        await tx.notification.create({
+            data: {
+                user_id: assignment.helper_id,
+                title: "Relawan Dikonfirmasi",
+                body: "Anda telah dikonfirmasi untuk membantu permintaan ini. Silakan mulai membantu.",
+                type: "HELP"
+            }
         });
 
         return { success: true };
@@ -232,6 +251,13 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
         }
 
         if (actor === CancelActor.HELPER && assignment) {
+            await tx.helpRequest.update({
+                where: { id: help.id },
+                data: {
+                    status: "OPEN",
+                },
+            });
+
             await tx.helpAssignment.update({
                 where: { id: assignment.id },
                 data: {
@@ -239,17 +265,21 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
                     failed_at: new Date(),
                 },
             });
-
-            await tx.helpRequest.update({
-                where: { id: help.id },
-                data: {
-                    status: "OPEN",
-                },
-            });
         }
 
         if (assignment) {
             await chatService.closeChatRoomTx(tx, assignment.id)
+
+            // Notify the other party
+            const otherUserId = actor === CancelActor.REQUESTER ? assignment.helper_id : help.user_id;
+            await tx.notification.create({
+                data: {
+                    user_id: otherUserId,
+                    title: "Bantuan Dibatalkan",
+                    body: `Bantuan telah dibatalkan oleh ${actor === CancelActor.REQUESTER ? 'peminta bantuan' : 'relawan'}.`,
+                    type: "HELP"
+                }
+            });
         }
 
         return {

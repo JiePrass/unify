@@ -64,7 +64,8 @@ exports.assignMissionsToUser = async (userId) => {
  * Update mission progress by event
  * event berasal dari HELP SERVICE
  */
-exports.updateMissionProgress = async (userId, event, increment = 1) => {
+exports.updateMissionProgress = async (userId, event, increment = 1, tx = null) => {
+    const client = tx || prisma;
     const EVENT_MISSION_MAP = {
         HELP_TAKEN: ['HELP_TAKEN'],
         HELP_COMPLETED: ['HELP_COMPLETED'],
@@ -78,22 +79,22 @@ exports.updateMissionProgress = async (userId, event, increment = 1) => {
     const missionCodes = EVENT_MISSION_MAP[event]
     if (!missionCodes) return
 
-    const missions = await prisma.mission.findMany({
+    const missions = await client.mission.findMany({
         where: { code: { in: missionCodes } },
     })
 
     if (!missions.length) return
 
     for (const mission of missions) {
-        await progressSingleMission(userId, mission, increment)
+        await progressSingleMission(userId, mission, increment, client)
     }
 }
 
 /**
  * Progress satu mission (idempotent & safe)
  */
-const progressSingleMission = async (userId, mission, increment) => {
-    const userMission = await prisma.userMission.findFirst({
+const progressSingleMission = async (userId, mission, increment, client) => {
+    const userMission = await client.userMission.findFirst({
         where: {
             user_id: userId,
             mission_id: mission.id,
@@ -106,9 +107,9 @@ const progressSingleMission = async (userId, mission, increment) => {
     const nextProgress = userMission.progress_value + increment
 
     if (nextProgress >= mission.target_value && mission.auto_complete) {
-        await completeMission(userId, mission, userMission.id)
+        await completeMission(userId, mission, userMission.id, client)
     } else {
-        await prisma.userMission.update({
+        await client.userMission.update({
             where: { id: userMission.id },
             data: { progress_value: nextProgress },
         })
@@ -119,8 +120,8 @@ const progressSingleMission = async (userId, mission, increment) => {
  * Complete mission + reward
  * dijamin tidak double reward
  */
-const completeMission = async (userId, mission, userMissionId) => {
-    await prisma.$transaction(async (tx) => {
+const completeMission = async (userId, mission, userMissionId, client) => {
+    const execute = async (tx) => {
         const alreadyCompleted = await tx.userMission.findUnique({
             where: { id: userMissionId },
             select: { is_completed: true },
@@ -150,7 +151,21 @@ const completeMission = async (userId, mission, userMissionId) => {
                     user_id: userId,
                     badge_id: mission.reward_badge_id,
                 },
-            })
+            });
+
+            const badge = await tx.badge.findUnique({
+                where: { id: mission.reward_badge_id },
+                select: { name: true }
+            });
+
+            await tx.notification.create({
+                data: {
+                    user_id: userId,
+                    title: 'Badge Baru!',
+                    body: `Selamat! Anda mendapatkan badge "${badge.name}" dari misi ini.`,
+                    type: 'BADGE',
+                },
+            });
         }
 
         await tx.notification.create({
@@ -161,5 +176,13 @@ const completeMission = async (userId, mission, userMissionId) => {
                 type: 'MISSION',
             },
         })
-    })
+    }
+
+    if (client !== prisma) {
+        // We are already in a transaction
+        await execute(client)
+    } else {
+        // Start a new transaction
+        await prisma.$transaction(execute)
+    }
 }

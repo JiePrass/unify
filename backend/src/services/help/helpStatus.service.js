@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const missionService = require('../missions.service');
 const rewardService = require('../reward.service')
 const chatService = require('../chat.service');
+const notificationService = require('../notification.service');
 
 exports.markCompleted = async (assignmentId, helperId) => {
     // ======================
@@ -37,6 +38,11 @@ exports.markCompleted = async (assignmentId, helperId) => {
     // 2. TRANSACTION (RINGAN)
     // ======================
     await prisma.$transaction(async (tx) => {
+        await tx.helpRequest.update({
+            where: { id: assignment.help_request_id },
+            data: { status: 'COMPLETED' },
+        });
+
         await tx.helpAssignment.update({
             where: { id: assignmentId },
             data: {
@@ -45,12 +51,16 @@ exports.markCompleted = async (assignmentId, helperId) => {
             },
         });
 
-        await tx.helpRequest.update({
-            where: { id: assignment.help_request_id },
-            data: { status: 'COMPLETED' },
-        });
-
         await chatService.closeChatRoomTx(tx, assignment.id);
+
+        await tx.notification.create({
+            data: {
+                user_id: assignment.helpRequest.user_id,
+                title: "Bantuan Selesai",
+                body: "Relawan telah menyelesaikan permintaan bantuan Anda. Terima kasih!",
+                type: "HELP"
+            }
+        });
     });
 
     // ======================
@@ -80,22 +90,30 @@ exports.markCompleted = async (assignmentId, helperId) => {
 
 
 exports.markFailed = async (assignmentId) => {
-    const assignment = await prisma.helpAssignment.update({
-        where: { id: assignmentId },
-        data: {
-            status: "FAILED",
-            failed_at: new Date()
-        }
+    return prisma.$transaction(async (tx) => {
+        const assignment = await tx.helpAssignment.findUnique({
+            where: { id: assignmentId }
+        });
+
+        if (!assignment) throw new Error("Assignment not found");
+
+        await tx.helpRequest.update({
+            where: { id: assignment.help_request_id },
+            data: { status: "CANCELLED" }
+        });
+
+        await tx.helpAssignment.update({
+            where: { id: assignmentId },
+            data: {
+                status: "FAILED",
+                failed_at: new Date()
+            }
+        });
+
+        chatService.closeChatRoom(assignmentId);
+
+        return assignment;
     });
-
-    await prisma.helpRequest.update({
-        where: { id: assignment.help_request_id },
-        data: { status: "CANCELLED" }
-    });
-
-    chatService.closeChatRoom(assignment.id)
-
-    return assignment;
 };
 
 exports.markTimeout = async (helpRequestId) => {
