@@ -8,7 +8,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { getGlobalLeaderboard } from "@/lib/api/leaderboard";
 import HeaderScreen from "@/components/header-screen";
 

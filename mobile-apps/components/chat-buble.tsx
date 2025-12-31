@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
-import { ThemedView } from "@/components/themed-view";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/ui/themed-view";
+import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 interface Props {

@@ -11,12 +11,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import HeaderScreen from "@/components/header-screen";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/ui/themed-text";
+import { ThemedView } from "@/components/ui/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
-
+import { Image } from "expo-image";
 import { getMissionById, getUserMissions } from "@/lib/api/mission";
 import { MissionCard } from "@/components/cards/mission-card";
+
+const getMissionIconByCode = (code?: string) => {
+    switch (code) {
+        case "HELP_TAKEN":
+            return "hand-left-outline";
+
+        case "HELP_COMPLETED":
+            return "checkmark-done-outline";
+
+        case "HELP_REQUEST":
+            return "help-circle-outline";
+
+        case "LOGIN_STREAK":
+            return "flame-outline";
+
+        case "PROFILE_COMPLETED":
+            return "person-circle-outline";
+
+        default:
+            return "ribbon-outline";
+    }
+};
 
 export default function MissionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,9 +53,6 @@ export default function MissionDetailScreen() {
     const [detail, setDetail] = useState<any>(null);
     const [missions, setMissions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [loadingMissions, setLoadingMissions] = useState(true);
-
-    console.log(missions)
 
     useEffect(() => {
         if (!missionId) return;
@@ -42,18 +61,14 @@ export default function MissionDetailScreen() {
             .then((res) => setDetail(res.data))
             .finally(() => setLoading(false));
 
-        getUserMissions()
-            .then((missions) => {
-                setMissions(
-                    missions.filter(
-                        (m: any) => m.mission.id !== missionId
-                    )
-                );
-            })
-            .finally(() => setLoadingMissions(false));
+        getUserMissions().then((res) => {
+            setMissions(
+                res.filter((m: any) => m.mission.id !== missionId)
+            );
+        });
     }, [missionId]);
 
-    if (loading) {
+    if (loading || !detail) {
         return (
             <SafeAreaView style={[styles.center, { backgroundColor: background }]}>
                 <ActivityIndicator />
@@ -74,20 +89,30 @@ export default function MissionDetailScreen() {
                 {/* ===== HEADER CARD ===== */}
                 <ThemedView style={[styles.headerCard, { backgroundColor: card }]}>
                     <View style={[styles.iconCircle, { borderColor: tint }]}>
-                        <Ionicons name="book-outline" size={26} color={tint} />
+                        <Ionicons
+                            name={getMissionIconByCode(detail.mission.code)}
+                            size={28}
+                            color={tint}
+                        />
                     </View>
 
                     <ThemedText type="title">
                         {detail.mission.title}
                     </ThemedText>
 
-                    <ThemedText
-                        style={{ color: subText, textAlign: "center" }}
-                    >
-                        {detail.mission.description}
-                    </ThemedText>
+                    {/* Meta Info */}
+                    <View style={styles.metaRow}>
+                        <ThemedText style={[styles.metaText, { color: subText }]}>
+                            {detail.mission.category} • {detail.mission.reward_points}
+                        </ThemedText>
+                        <Image
+                            source={require("@/assets/icons/unify-coin.png")}
+                            style={styles.coinIcon}
+                        />
+                    </View>
 
-                    <View style={styles.progressLabel}>
+                    {/* Progress */}
+                    <View style={styles.progressRow}>
                         <ThemedText style={{ color: subText }}>
                             Progress Saat Ini
                         </ThemedText>
@@ -96,12 +121,7 @@ export default function MissionDetailScreen() {
                         </ThemedText>
                     </View>
 
-                    <View
-                        style={[
-                            styles.progressTrack,
-                            { backgroundColor: border },
-                        ]}
-                    >
+                    <View style={[styles.progressTrack, { backgroundColor: border }]}>
                         <View
                             style={[
                                 styles.progressFill,
@@ -124,12 +144,36 @@ export default function MissionDetailScreen() {
                     </ThemedText>
                 </ThemedView>
 
+                {/* ===== REWARD ===== */}
+                {detail.mission.rewardBadge && (
+                    <ThemedView style={[styles.infoCard, { backgroundColor: card }]}>
+                        <ThemedText type="defaultSemiBold">
+                            Reward
+                        </ThemedText>
+
+                        {/* Badge Preview */}
+                        <View style={styles.badgeRow}>
+                            <Image
+                                source={{ uri: detail.mission.rewardBadge.icon_url }}
+                                style={styles.badgeIcon}
+                                contentFit="cover"
+                            />
+                            <View>
+                                <ThemedText type="defaultSemiBold">
+                                    {detail.mission.rewardBadge.name}
+                                </ThemedText>
+                                <ThemedText style={{ color: subText }}>
+                                    {detail.mission.rewardBadge.tier}
+                                </ThemedText>
+                            </View>
+                        </View>
+                    </ThemedView>
+                )}
+
                 {/* ===== MISI LAINNYA ===== */}
-                <View style={styles.sectionHeader}>
-                    <ThemedText type="defaultSemiBold">
-                        Misi Lainnya
-                    </ThemedText>
-                </View>
+                <ThemedText type="defaultSemiBold">
+                    Misi Lainnya
+                </ThemedText>
 
                 <FlatList
                     data={missions}
@@ -140,18 +184,13 @@ export default function MissionDetailScreen() {
                             id={item.mission.id}
                             title={item.mission.title}
                             description={item.mission.description}
-                            category={item.mission.category}
+                            code={item.mission.code}
                             progress={item.progress_value}
                             target={item.mission.target_value}
                             rewardPoints={item.mission.reward_points}
                             hasBadge={!!item.mission.reward_badge_id}
                         />
                     )}
-                    ListEmptyComponent={
-                        loadingMissions ? (
-                            <ActivityIndicator style={{ marginTop: 16 }} />
-                        ) : null
-                    }
                 />
             </ScrollView>
         </SafeAreaView>
@@ -173,7 +212,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 20,
         alignItems: "center",
-        gap: 10,
+        gap: 8,
     },
     iconCircle: {
         width: 64,
@@ -182,9 +221,46 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         alignItems: "center",
         justifyContent: "center",
+        marginBottom: 4,
     },
 
-    progressLabel: {
+    metaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 4,
+    },
+
+    metaText: {
+        fontSize: 13,
+    },
+
+    coinIcon: {
+        width: 12,
+        height: 12
+    },
+
+    rewardRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 4,
+    },
+
+    badgeRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginTop: 8,
+    },
+
+    badgeIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+    },
+
+    progressRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         width: "100%",
@@ -205,9 +281,5 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         gap: 8,
-    },
-
-    sectionHeader: {
-        marginTop: 8,
     },
 });

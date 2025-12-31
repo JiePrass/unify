@@ -13,7 +13,7 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { getHelpRequestById, takeHelpRequest, confirmHelper, cancelHelpRequest, markHelpCompleted, markHelpFailed } from "@/lib/api/help";
 import HeaderScreen from "@/components/header-screen";

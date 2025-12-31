@@ -8,7 +8,7 @@ import {
     Alert,
 } from "react-native";
 import { Marker } from "react-native-maps";
-import { UnifiedMapView } from "@/components/unified-map-view";
+import { UnifiedMapView } from "@/components/ui/unified-map-view";
 import * as Location from "expo-location";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,7 +17,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { useLocation } from "@/contexts/location-context";
 import HelpCategoryModal from "@/components/modals/help-category-modal";
 import { createHelpRequest } from "@/lib/api/help";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import HeaderScreen from "@/components/header-screen";
 
 type UserLocation = {

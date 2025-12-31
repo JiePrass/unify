@@ -1,6 +1,6 @@
 import { StyleSheet, View, ActivityIndicator, useColorScheme } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { Colors } from "@/constants/theme";
 
 type Props = {

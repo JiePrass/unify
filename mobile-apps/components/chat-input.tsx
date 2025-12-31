@@ -1,5 +1,5 @@
 import { StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedView } from "@/components/ui/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { Ionicons } from "@expo/vector-icons";
 

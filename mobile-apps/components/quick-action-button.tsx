@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity, View, StyleSheet } from "react-native";
-import { ThemedText } from "./themed-text";
+import { ThemedText } from "./ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function QuickAction({

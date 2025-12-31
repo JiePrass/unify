@@ -1,12 +1,12 @@
 import { MissionCard } from "@/components/cards/mission-card";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/ui/themed-text";
+import { ThemedView } from "@/components/ui/themed-view";
 import { useAuth } from "@/contexts/auth-context";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { getUserMissions } from "@/lib/api/mission";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,21 +14,20 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MissionScreen() {
   const { user } = useAuth();
 
-  const primary = useThemeColor({}, 'primary');
-  const background = useThemeColor({}, 'background');
-  const card = useThemeColor({}, 'card');
-  const border = useThemeColor({}, 'border');
+  const primary = useThemeColor({}, "primary");
+  const background = useThemeColor({}, "background");
+  const card = useThemeColor({}, "card");
+  const border = useThemeColor({}, "border");
 
   const [missions, setMissions] = useState<any[]>([]);
   const [loadingMissions, setLoadingMissions] = useState(true);
-
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchMissions = async () => {
@@ -51,28 +50,92 @@ export default function MissionScreen() {
     fetchMissions();
   };
 
+  /* ===============================
+     KLASIFIKASI MISI
+  =============================== */
+  const {
+    completedMissions,
+    inProgressMissions,
+    availableMissions,
+  } = useMemo(() => {
+    const completed: any[] = [];
+    const inProgress: any[] = [];
+    const available: any[] = [];
+
+    missions.forEach((item) => {
+      const progress = item.progress_value;
+      const target = item.mission.target_value;
+
+      if (progress >= target) {
+        completed.push(item);
+      } else if (progress > 0) {
+        inProgress.push(item);
+      } else {
+        available.push(item);
+      }
+    });
+
+    return {
+      completedMissions: completed,
+      inProgressMissions: inProgress,
+      availableMissions: available,
+    };
+  }, [missions]);
+
+  /* ===============================
+     RENDER SECTION
+  =============================== */
+  const renderMissionSection = (title: string, data: any[]) => {
+    if (data.length === 0) return null;
+
+    return (
+      <View style={{ marginBottom: 24 }}>
+        <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+          {title}
+        </ThemedText>
+
+        {data.map((item) => (
+          <MissionCard
+            key={item.id}
+            id={item.mission.id}
+            title={item.mission.title}
+            description={item.mission.description}
+            code={item.mission.code}
+            progress={item.progress_value}
+            target={item.mission.target_value}
+            rewardPoints={item.mission.reward_points}
+            hasBadge={!!item.mission.reward_badge_id}
+          />
+        ))}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <ThemedView style={styles.container}>
         <FlatList
-          data={missions}
-          keyExtractor={(item) => item.id.toString()}
+          data={[1]} // dummy, karena isi pakai ListHeaderComponent
+          keyExtractor={() => "mission-root"}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[primary]}
+            />
           }
+          renderItem={null}
           ListHeaderComponent={
             <>
-              {/* Header */}
+              {/* HEADER */}
               <ThemedView style={styles.header}>
-                {/* Left: Point */}
                 <View style={styles.pointRow}>
                   <Image
                     source={require("@/assets/icons/unify-coin.png")}
                     style={styles.coinIcon}
                     resizeMode="contain"
                   />
-
                   <View>
                     <ThemedText type="subtitle">Total Poin</ThemedText>
                     <ThemedText type="title">
@@ -92,69 +155,59 @@ export default function MissionScreen() {
                         : require("@/assets/icons/avatar-placeholder.png")
                     }
                     style={styles.avatarImage}
-                    resizeMode="cover"
                   />
                 </Pressable>
               </ThemedView>
 
-              {/* Action Buttons */}
+              {/* ACTION BUTTON */}
               <ThemedView style={styles.actionRow}>
                 <Pressable
                   style={[
                     styles.actionButton,
-                    {
-                      backgroundColor: card,
-                      borderColor: border,
-                    },
+                    { backgroundColor: card, borderColor: border },
                   ]}
                   onPress={() => router.push("/")}
                 >
-                  <Ionicons
-                    name="ribbon"
-                    size={32}
-                    color={primary}
-                  />
+                  <Ionicons name="ribbon" size={32} color={primary} />
                   <ThemedText type="defaultSemiBold">Lencana</ThemedText>
                 </Pressable>
 
                 <Pressable
                   style={[
                     styles.actionButton,
-                    {
-                      backgroundColor: card,
-                      borderColor: border,
-                    },
+                    { backgroundColor: card, borderColor: border },
                   ]}
                   onPress={() => router.push("/leaderboard")}
                 >
-                  <Ionicons
-                    name="trophy"
-                    size={32}
-                    color={primary}
-                  />
+                  <Ionicons name="trophy" size={32} color={primary} />
                   <ThemedText type="defaultSemiBold">
                     Papan Peringkat
                   </ThemedText>
                 </Pressable>
               </ThemedView>
 
-              <ThemedText type="defaultSemiBold" style={{ marginBottom: 12 }}>Daftar Misi</ThemedText>
+              {/* MISI */}
+              {loadingMissions ? (
+                <ActivityIndicator style={{ marginTop: 20 }} />
+              ) : (
+                <>
+                  {renderMissionSection(
+                    "Misi Sedang Berjalan",
+                    inProgressMissions
+                  )}
+
+                  {renderMissionSection(
+                    "Misi Tersedia",
+                    availableMissions
+                  )}
+
+                  {renderMissionSection(
+                    "Misi Selesai",
+                    completedMissions
+                  )}
+                </>
+              )}
             </>
-          }
-          renderItem={({ item }) => (
-            <MissionCard
-              id={item.mission.id}
-              title={item.mission.title}
-              description={item.mission.description}
-              category={item.mission.category}
-              progress={item.progress_value}
-              target={item.mission.target_value}
-              rewardPoints={item.mission.reward_points}
-              hasBadge={!!item.mission.reward_badge_id}
-            />
-          )}
-          ListEmptyComponent={
-            loadingMissions ? <ActivityIndicator style={{ marginTop: 20 }} /> : null
           }
         />
       </ThemedView>
@@ -162,21 +215,16 @@ export default function MissionScreen() {
   );
 }
 
+/* ===============================
+  STYLES
+=============================== */
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+  safeArea: { flex: 1 },
+  container: { flex: 1, padding: 16 },
 
-  /* Header */
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 14,
     marginBottom: 20,
   },
   pointRow: {
@@ -184,22 +232,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  coinIcon: {
-    width: 50,
-    height: 50,
-  },
+  coinIcon: { width: 50, height: 50 },
+
   avatarWrapper: {
     width: 54,
     height: 54,
     borderRadius: 28,
     overflow: "hidden",
   },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-  },
+  avatarImage: { width: "100%", height: "100%" },
 
-  /* Action Buttons */
   actionRow: {
     flexDirection: "row",
     gap: 12,
@@ -215,8 +257,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  /* Mission */
-  missionContainer: {
-    paddingBottom: 20
+  sectionTitle: {
+    marginBottom: 12,
   },
 });

@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import HeaderScreen from "@/components/header-screen";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { getHelpHistory } from "@/lib/api/help";
 import { HelpCard } from "@/components/cards/help-card";

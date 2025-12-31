@@ -1,4 +1,4 @@
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { Colors } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
@@ -9,21 +9,32 @@ type MissionCardProps = {
     id: string;
     title: string;
     description: string;
-    category: string;
+    code: string;
     progress: number;
     target: number;
     rewardPoints: number;
     hasBadge: boolean;
 };
 
-const getCategoryIcon = (category: string) => {
-    switch (category) {
-        case "GENERAL":
+const getMissionIconByCode = (code?: string) => {
+    switch (code) {
+        case "HELP_TAKEN":
             return "hand-left-outline";
-        case "EMERGENCY":
-            return "alert-circle-outline";
+
+        case "HELP_COMPLETED":
+            return "checkmark-done-outline";
+
+        case "HELP_REQUEST":
+            return "help-circle-outline";
+
+        case "LOGIN_STREAK":
+            return "flame-outline";
+
+        case "PROFILE_COMPLETED":
+            return "person-circle-outline";
+
         default:
-            return "flag-outline";
+            return "ribbon-outline";
     }
 };
 
@@ -31,7 +42,7 @@ export function MissionCard({
     id,
     title,
     description,
-    category,
+    code,
     progress,
     target,
     rewardPoints,
@@ -39,7 +50,6 @@ export function MissionCard({
 }: MissionCardProps) {
     const scheme = useColorScheme() ?? "light";
     const theme = Colors[scheme];
-
     const progressPercent = Math.min(progress / target, 1);
 
     return (
@@ -53,7 +63,7 @@ export function MissionCard({
                     ]}
                 >
                     <Ionicons
-                        name={getCategoryIcon(category)}
+                        name={getMissionIconByCode(code)}
                         size={28}
                         color={theme.buttonTextPrimary}
                     />

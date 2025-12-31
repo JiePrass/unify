@@ -4,7 +4,7 @@ import MapView, { MapViewProps } from "react-native-maps";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 
 interface UnifiedMapViewProps extends MapViewProps {
     loading?: boolean;

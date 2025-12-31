@@ -7,7 +7,7 @@ import {
     StyleSheet,
     ActivityIndicator,
 } from "react-native";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 const CANCEL_REASONS_REQUESTER = [

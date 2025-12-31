@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { io, Socket } from "socket.io-client";
 import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import HeaderScreen from "@/components/header-screen";
 import ChatBubble from "@/components/chat-buble";

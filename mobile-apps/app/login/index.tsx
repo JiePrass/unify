@@ -1,6 +1,6 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedTextInput } from "@/components/themed-text-input";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/ui/themed-text";
+import { ThemedTextInput } from "@/components/ui/themed-text-input";
+import { ThemedView } from "@/components/ui/themed-view";
 import { useAuth } from "@/contexts/auth-context";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { getCurrentUser, loginUser } from "@/lib/api/auth";

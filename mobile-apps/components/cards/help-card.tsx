@@ -1,7 +1,7 @@
 import { StyleSheet, View, TouchableOpacity, useColorScheme } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/ui/themed-text";
+import { ThemedView } from "@/components/ui/themed-view";
 import { Colors } from "@/constants/theme";
 
 type HelpCardProps = {
