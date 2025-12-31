@@ -47,7 +47,7 @@ const stylesStatic = StyleSheet.create({
     quickActionCircle: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,

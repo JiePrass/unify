@@ -77,6 +77,7 @@ export default function HomeScreen() {
     } else if (!locationLoading && !location) {
       setLoadingHelp(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, locationLoading]);
 
   const onRefresh = async () => {

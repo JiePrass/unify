@@ -166,7 +166,7 @@ export default function MissionScreen() {
                     styles.actionButton,
                     { backgroundColor: card, borderColor: border },
                   ]}
-                  onPress={() => router.push("/")}
+                  onPress={() => router.push("/badges")}
                 >
                   <Ionicons name="ribbon" size={32} color={primary} />
                   <ThemedText type="defaultSemiBold">Lencana</ThemedText>
