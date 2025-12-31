@@ -22,7 +22,27 @@ exports.createChatRoomTx = async (tx, assignmentId) => {
 };
 
 exports.createChatRoom = async (assignmentId) => {
-    return exports.createChatRoomTx(prisma, assignmentId);
+    const assignment = await prisma.helpAssignment.findUnique({
+        where: { id: assignmentId },
+        select: {
+            id: true,
+            help_request_id: true,
+        },
+    });
+    if (!assignment) throw new Error("Assignment not found");
+
+    return prisma.chatRoom.upsert({
+        where: { assignment_id: assignmentId },
+        update: {
+            is_active: true,
+            closed_at: null,
+        },
+        create: {
+            assignment_id: assignment.id,
+            help_request_id: assignment.help_request_id,
+            is_active: true,
+        },
+    });
 };
 
 

@@ -249,7 +249,7 @@ exports.cancelHelpRequest = async (userId, helpRequestId, payload = {}) => {
         }
 
         if (assignment) {
-            chatService.closeChatRoom(assignment.id, tx)
+            await chatService.closeChatRoomTx(tx, assignment.id)
         }
 
         return {
