@@ -89,7 +89,7 @@ export default function MissionScreen() {
     if (data.length === 0) return null;
 
     return (
-      <View style={{ marginBottom: 24 }}>
+      <View style={{ marginBottom: 60 }}>
         <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
           {title}
         </ThemedText>

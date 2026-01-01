@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { FlatList, Image, StyleSheet, View } from "react-native"
-
+import { useThemeColor } from "@/hooks/use-theme-color"
 import { ThemedText } from "@/components/ui/themed-text"
 import { ThemedView } from "@/components/ui/themed-view"
 import { getUserBadges } from "@/lib/api/badge"
@@ -19,6 +19,8 @@ type Badge = {
 export default function BadgesScreen() {
     const [badges, setBadges] = useState<Badge[]>([])
     const [loading, setLoading] = useState(true)
+
+    const background = useThemeColor({}, 'background');
 
     useEffect(() => {
         fetchBadges()
@@ -51,7 +53,7 @@ export default function BadgesScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: background }]}>
             <HeaderScreen title="Lencana" />
 
             <FlatList
@@ -86,6 +88,7 @@ export default function BadgesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        gap: 20
     },
     center: {
         flex: 1,

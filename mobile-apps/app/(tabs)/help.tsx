@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
     StyleSheet,
     View,
-    FlatList,
     TouchableOpacity,
     RefreshControl,
     ScrollView,
@@ -50,7 +49,6 @@ export default function HelpScreen() {
     const background = useThemeColor({}, "background");
     const card = useThemeColor({}, "card");
     const primary = useThemeColor({}, "primary");
-    const subText = useThemeColor({}, "subText");
     const border = useThemeColor({}, "border");
 
     const [activeHelp, setActiveHelp] = useState<any>(null);
@@ -90,6 +88,7 @@ export default function HelpScreen() {
         } else if (!locationLoading && !location) {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location, locationLoading]);
 
     const onRefresh = async () => {
@@ -373,6 +372,7 @@ const styles = StyleSheet.create({
     listWrapper: {
         flex: 1,
         paddingHorizontal: 16,
+        paddingBottom: 40
     },
     sectionTitle: {
         fontSize: 16,

@@ -90,7 +90,7 @@ export default function HelpDetailScreen() {
     const handleTakeHelp = async () => {
         try {
             setActionLoading(true);
-            await takeHelpRequest(help.id);
+            await takeHelpRequest(Number(help.id));
             fetchHelp();
         } catch (err: any) {
             Alert.alert("Gagal", "Tidak dapat mengambil bantuan. Pastikan Anda tidak memiliki bantuan aktif lain.");

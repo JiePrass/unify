@@ -152,9 +152,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/help/request')}
           />
           <QuickAction
-            icon="analytics"
-            label="Progress Misi"
-            onPress={() => Alert.alert('Info', 'Fitur belum tersedia')}
+            icon="ribbon"
+            label="Lencana"
+            onPress={() => router.push('/badges')}
           />
           <QuickAction
             icon="time"
