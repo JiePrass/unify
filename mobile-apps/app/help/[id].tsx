@@ -1,24 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-    View,
-    StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
-    Linking,
-    Platform,
-    Alert,
-} from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "expo-image";
+import HeaderScreen from "@/components/header-screen";
+import CancelHelpModal from "@/components/modals/cancel-help-modal";
 import { ThemedText } from "@/components/ui/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { getHelpRequestById, takeHelpRequest, confirmHelper, cancelHelpRequest, markHelpCompleted, markHelpFailed } from "@/lib/api/help";
-import HeaderScreen from "@/components/header-screen";
+import { cancelHelpRequest, confirmHelper, getHelpRequestById, markHelpCompleted, markHelpFailed, takeHelpRequest } from "@/lib/api/help";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import CancelHelpModal from "@/components/modals/cancel-help-modal";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { Image } from "expo-image";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    Linking,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import MapView, { Marker } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const getStatusColor = (status: string, colors: any) => {
     switch (status.toUpperCase()) {
@@ -391,14 +391,20 @@ export default function HelpDetailScreen() {
 
                     {(help.status === "TAKEN" || help.status === "IN_PROGRESS") && (
                         <>
-                            <TouchableOpacity
-                                style={[styles.actionButton, styles.outlineButton, { borderColor: primary, marginBottom: 12, marginTop: 20 }]}
-                                onPress={handleOpenMaps}
-                            >
-                                <ThemedText style={[styles.outlineText, { color: primary }]}>
-                                    Navigasi ke Lokasi
-                                </ThemedText>
-                            </TouchableOpacity>
+                            {help.role === "HELPER" && (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.actionButton,
+                                        styles.outlineButton,
+                                        { borderColor: primary, marginBottom: 12, marginTop: 20 },
+                                    ]}
+                                    onPress={handleOpenMaps}
+                                >
+                                    <ThemedText style={[styles.outlineText, { color: primary }]}>
+                                        Navigasi ke Lokasi
+                                    </ThemedText>
+                                </TouchableOpacity>
+                            )}
 
                             <TouchableOpacity
                                 style={[styles.actionButton, { backgroundColor: primary, marginTop: 0 }]}
