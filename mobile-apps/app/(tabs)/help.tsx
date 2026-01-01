@@ -283,7 +283,7 @@ export default function HelpScreen() {
                     )}
 
                     {!loading && nearbyHelps.length > 0 && (
-                        <View style={{ gap: 12, paddingVertical: 12 }}>
+                        <View style={{ paddingVertical: 12 }}>
                             {nearbyHelps.map((item) => (
                                 <HelpCard
                                     key={item.id}

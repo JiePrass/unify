@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useState } from "react"
@@ -15,7 +16,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import Image from "next/image"
 
 type Badge = {
@@ -23,6 +23,12 @@ type Badge = {
     name: string
     icon_url: string
 }
+
+const MISSION_CATEGORIES = [
+    { value: "GENERAL", label: "Umum" },
+    { value: "DAILY", label: "Harian" },
+    { value: "WEEKLY", label: "Mingguan" },
+] as const
 
 const MISSION_CODES = [
     "HELP_TAKEN",
@@ -53,58 +59,88 @@ export default function CreateMissionPage() {
             const res = await getAllBadges()
             setBadges(res.data)
         }
-
         fetchBadges()
     }, [])
 
     const handleSubmit = async () => {
         setLoading(true)
+        try {
+            await createMission(form)
 
-        await createMission(form)
+            await Swal.fire({
+                title: "Misi berhasil dibuat",
+                icon: "success",
+            })
 
-        setLoading(false)
-
-        await Swal.fire({
-            title: "Mission created",
-            icon: "success",
-        })
-
-        router.push("/admin/missions")
+            router.push("/admin/missions")
+        } catch (err: any) {
+            await Swal.fire({
+                title: "Gagal membuat misi",
+                text:
+                    err?.response?.data?.error ||
+                    err?.message ||
+                    "Terjadi kesalahan",
+                icon: "error",
+            })
+        } finally {
+            setLoading(false)
+        }
     }
-
-    console.log(badges)
 
     return (
         <div className="p-6 max-w-3xl space-y-6">
-            <h1 className="text-xl font-semibold">Create Mission</h1>
+            <h1 className="text-xl font-semibold">Buat Misi Baru</h1>
 
-            {/* Code */}
-            {/* Mission Code */}
-            <div>
-                <Label>Mission Code</Label>
-                <Select
-                    value={form.code}
-                    onValueChange={(value) =>
-                        setForm({ ...form, code: value })
-                    }
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select mission code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {MISSION_CODES.map((code) => (
-                            <SelectItem key={code} value={code}>
-                                {code}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            {/* Code & Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <Label>Kode Misi</Label>
+                    <Select
+                        value={form.code}
+                        onValueChange={(value) =>
+                            setForm({ ...form, code: value })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Pilih kode misi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {MISSION_CODES.map((code) => (
+                                <SelectItem key={code} value={code}>
+                                    {code}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div>
+                    <Label>Kategori</Label>
+                    <Select
+                        value={form.category}
+                        onValueChange={(value) =>
+                            setForm({ ...form, category: value })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Pilih kategori" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {MISSION_CATEGORIES.map((cat) => (
+                                <SelectItem key={cat.value} value={cat.value}>
+                                    {cat.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             {/* Title */}
             <div>
-                <Label>Title</Label>
+                <Label>Judul Misi</Label>
                 <Input
+                    placeholder="Contoh: Selesaikan 3 bantuan"
                     value={form.title}
                     onChange={(e) =>
                         setForm({ ...form, title: e.target.value })
@@ -114,8 +150,9 @@ export default function CreateMissionPage() {
 
             {/* Description */}
             <div>
-                <Label>Description</Label>
+                <Label>Deskripsi</Label>
                 <Textarea
+                    placeholder="Jelaskan misi secara singkat dan jelas"
                     value={form.description}
                     onChange={(e) =>
                         setForm({ ...form, description: e.target.value })
@@ -123,23 +160,13 @@ export default function CreateMissionPage() {
                 />
             </div>
 
-            {/* Category */}
-            <div>
-                <Label>Category</Label>
-                <Input
-                    value={form.category}
-                    onChange={(e) =>
-                        setForm({ ...form, category: e.target.value })
-                    }
-                />
-            </div>
-
             {/* Target & Reward */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label>Target Value</Label>
+                    <Label>Target Penyelesaian</Label>
                     <Input
                         type="number"
+                        min={1}
                         value={form.target_value}
                         onChange={(e) =>
                             setForm({
@@ -151,9 +178,10 @@ export default function CreateMissionPage() {
                 </div>
 
                 <div>
-                    <Label>Reward Points</Label>
+                    <Label>Poin Reward</Label>
                     <Input
                         type="number"
+                        min={0}
                         value={form.reward_points}
                         onChange={(e) =>
                             setForm({
@@ -165,39 +193,26 @@ export default function CreateMissionPage() {
                 </div>
             </div>
 
-            {/* Auto Complete */}
-            <div className="flex items-center gap-3">
-                <Switch
-                    checked={form.auto_complete}
-                    onCheckedChange={(v) =>
-                        setForm({ ...form, auto_complete: v })
-                    }
-                />
-                <Label>Auto Complete</Label>
-            </div>
-
-            {/* Reward Badge Picker */}
+            {/* Reward Badge */}
             <div>
-                <Label className="mb-2 block">Reward Badge (optional)</Label>
+                <Label className="mb-2 block">Badge Reward (Opsional)</Label>
 
                 <div className="flex flex-wrap gap-3">
-                    {/* None option */}
                     <button
                         type="button"
                         onClick={() =>
                             setForm({ ...form, reward_badge_id: null })
                         }
                         className={`w-20 h-20 border rounded-lg flex items-center justify-center text-xs
-                            ${form.reward_badge_id === null
+                        ${form.reward_badge_id === null
                                 ? "border-primary ring-2 ring-primary"
                                 : "border-muted"
-                            }
-                        `}
+                            }`}
                     >
-                        None
+                        Tanpa Badge
                     </button>
 
-                    {(badges || []).map((badge) => (
+                    {badges.map((badge) => (
                         <button
                             key={badge.id}
                             type="button"
@@ -208,11 +223,10 @@ export default function CreateMissionPage() {
                                 })
                             }
                             className={`w-20 h-20 border rounded-lg flex flex-col items-center justify-center gap-1
-                                ${form.reward_badge_id === badge.id
+                            ${form.reward_badge_id === badge.id
                                     ? "border-primary ring-2 ring-primary"
                                     : "border-muted"
-                                }
-                            `}
+                                }`}
                         >
                             <Image
                                 src={badge.icon_url}
@@ -231,7 +245,7 @@ export default function CreateMissionPage() {
             {/* Submit */}
             <div className="pt-4">
                 <Button onClick={handleSubmit} disabled={loading}>
-                    Create Mission
+                    Simpan Misi
                 </Button>
             </div>
         </div>

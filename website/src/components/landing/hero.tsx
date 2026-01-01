@@ -8,9 +8,9 @@ export default function HeroSection() {
         <section className="relative overflow-hidden pt-24">
             {/* Animated background blur */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute top-[-10%] left-[-10%] h-100 w-100 rounded-full bg-emerald-400/30 blur-3xl animate-pulse" />
-                <div className="absolute top-[20%] right-[-10%] h-112.5 w-112.5 rounded-full bg-sky-400/30 blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
-                <div className="absolute bottom-[-15%] left-[30%] h-125 w-125 rounded-full bg-indigo-400/30 blur-3xl animate-[pulse_10s_ease-in-out_infinite]" />
+                <div className="absolute top-[-10%] left-[-10%] h-100 w-100 rounded-full bg-orange-300/30 blur-3xl animate-pulse" />
+                <div className="absolute top-[20%] right-[-10%] h-112.5 w-112.5 rounded-full bg-yellow-200/30 blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
+                <div className="absolute bottom-[-15%] left-[30%] h-125 w-125 rounded-full bg-amber-200/30 blur-3xl animate-[pulse_10s_ease-in-out_infinite]" />
             </div>
 
             <div

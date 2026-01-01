@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useState } from "react"
@@ -48,25 +49,38 @@ export default function AdminMissionsPage() {
 
     const handleDelete = async (id: number) => {
         const confirm = await Swal.fire({
-            title: "Delete mission?",
-            text: "This action cannot be undone.",
+            title: "Hapus Misi?",
+            text: "Misi yang telah dihapus tidak akan bisa dikembalikan.",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Delete",
-            cancelButtonText: "Cancel",
+            cancelButtonText: "Batal",
             confirmButtonColor: "#dc2626",
         })
 
         if (!confirm.isConfirmed) return
 
-        await deleteMission(id)
+        try {
+            await deleteMission(id)
 
-        setMissions((prev) => prev.filter((m) => m.id !== id))
+            setMissions((prev) => prev.filter((m) => m.id !== id))
 
-        await Swal.fire({
-            title: "Mission deleted",
-            icon: "success",
-        })
+            await Swal.fire({
+                title: "Misi Berhasil Di Hapus",
+                icon: "success",
+            })
+        } catch (err: any) {
+            const message =
+                err?.response?.data?.error ||
+                err?.message ||
+                "Gagal menghapus misi"
+
+            await Swal.fire({
+                title: "Gagal Menghapus Misi",
+                text: message,
+                icon: "error",
+            })
+        }
     }
 
     if (loading) {

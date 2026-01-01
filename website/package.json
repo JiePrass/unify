@@ -33,6 +33,7 @@
     "sweetalert": "^2.1.2",
     "sweetalert2": "^11.26.17",
     "tabler": "^1.0.0",
+    "tabler-icons-react": "^1.56.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

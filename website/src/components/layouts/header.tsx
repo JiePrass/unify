@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/auth-context";
 const navItems = [
     { id: "home", label: "Beranda", icon: Home },
     { id: "about", label: "Tentang Unify", icon: Info },
-    { id: "feature", label: "Testimoni", icon: MessageCircleMore },
+    { id: "faq", label: "FAQs", icon: MessageCircleMore },
     { id: "contact", label: "Hubungi Kami", icon: Headset },
 ] as const;
 
@@ -23,6 +23,7 @@ export default function Header() {
     const { user } = useAuth()
     const [activeId, setActiveId] = useState<string>("home");
     const [menuOpen, setMenuOpen] = useState(false);
+    const [isTop, setIsTop] = useState(true);
     const controls = useAnimation();
     const lastScrollY = useRef<number>(0);
 
@@ -50,6 +51,8 @@ export default function Header() {
         const handleScroll = () => {
             const currentY = window.scrollY;
 
+            setIsTop(currentY <= 10);
+
             if (currentY > lastScrollY.current && currentY > 80) {
                 controls.start({ y: "-100%" });
             } else {
@@ -62,6 +65,7 @@ export default function Header() {
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, [controls]);
+
 
     /* ============================ LOCK SCROLL WHEN SIDEBAR OPEN ============================ */
     useEffect(() => {
@@ -89,12 +93,17 @@ export default function Header() {
             <motion.header
                 animate={controls}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed top-0 left-0 right-0 z-50"
+                className={clsx(
+                    "fixed top-0 left-0 right-0 z-50 transition-colors duration-300",
+                    isTop
+                        ? "bg-transparent"
+                        : "bg-white"
+                )}
             >
                 <div className="flex justify-between items-center py-4 px-6 lg:px-4 lg:mx-auto lg:container">
                     {/* Logo */}
                     <Link
-                        href="#home"
+                        href="#s"
                         className="text-2xl lg:text-3xl font-bold text-primary"
                     >
                         <Image

@@ -15,7 +15,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Camera } from "lucide-react"
 
 export default function CreateBadgePage() {
     const [name, setName] = useState("")
@@ -26,19 +27,15 @@ export default function CreateBadgePage() {
 
     const handleFileChange = (file: File | null) => {
         setIcon(file)
-        if (file) {
-            setPreview(URL.createObjectURL(file))
-        } else {
-            setPreview(null)
-        }
+        setPreview(file ? URL.createObjectURL(file) : null)
     }
 
     const handleSubmit = async () => {
         if (!name || !tier || !icon) {
             await Swal.fire({
                 icon: "warning",
-                title: "Incomplete Data",
-                text: "Name, tier, and icon are required.",
+                title: "Data belum lengkap",
+                text: "Nama, tier, dan ikon wajib diisi.",
             })
             return
         }
@@ -55,7 +52,7 @@ export default function CreateBadgePage() {
             await Swal.fire({
                 icon: "success",
                 title: "Berhasil",
-                text: "Lencana baru berhasil dibuat",
+                text: "Lencana berhasil dibuat.",
             })
 
             setName("")
@@ -66,71 +63,83 @@ export default function CreateBadgePage() {
             await Swal.fire({
                 icon: "error",
                 title: "Gagal",
-                text: error?.message ?? "Gagal membuat lencana",
-            }
-            )
+                text: error?.message || "Gagal membuat lencana.",
+            })
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="max-w-xl">
-            <Card>
-                <CardContent className="space-y-6 pt-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Nama Lencana</label>
-                        <Input
-                            placeholder="e.g. First Responder"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </div>
+        <div className="p-6 max-w-xl space-y-6">
+            <h1 className="text-xl font-semibold">Buat Lencana Baru</h1>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Tier</label>
-                        <Select value={tier} onValueChange={setTier}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select tier" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="BRONZE">Bronze</SelectItem>
-                                <SelectItem value="SILVER">Silver</SelectItem>
-                                <SelectItem value="GOLD">Gold</SelectItem>
-                                <SelectItem value="PLATINUM">Platinum</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+            {/* Nama */}
+            <div>
+                <Label>Nama Lencana</Label>
+                <Input
+                    placeholder="Contoh: First Responder"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+            </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Icon</label>
-                        <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-                        />
+            {/* Tier */}
+            <div>
+                <Label>Tier</Label>
+                <Select value={tier} onValueChange={setTier}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Pilih tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="BRONZE">Bronze</SelectItem>
+                        <SelectItem value="SILVER">Silver</SelectItem>
+                        <SelectItem value="GOLD">Gold</SelectItem>
+                        <SelectItem value="PLATINUM">Platinum</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
 
-                        {preview && (
-                            <div className="relative w-24 h-24 mt-2">
-                                <Image
-                                    src={preview}
-                                    alt="Preview"
-                                    fill
-                                    className="object-contain rounded"
-                                />
-                            </div>
+            {/* Ikon */}
+            <div className="space-y-2">
+                <Label>Ikon Lencana</Label>
+
+                <div className="flex items-center gap-4">
+                    {/* Preview */}
+                    <div className="relative w-24 h-24 rounded-lg border flex items-center justify-center bg-muted">
+                        {preview ? (
+                            <Image
+                                src={preview}
+                                alt="Preview ikon"
+                                fill
+                                className="object-contain rounded-lg"
+                            />
+                        ) : (
+                            <Camera className="w-8 h-8 text-muted-foreground" />
                         )}
                     </div>
 
-                    <Button
-                        className="w-full"
-                        onClick={handleSubmit}
-                        disabled={loading}
-                    >
-                        {loading ? "Creating..." : "Create Badge"}
-                    </Button>
-                </CardContent>
-            </Card>
+                    {/* File Input */}
+                    <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                            handleFileChange(e.target.files?.[0] ?? null)
+                        }
+                    />
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                    Rekomendasi: PNG / SVG, rasio 1:1
+                </p>
+            </div>
+
+            {/* Submit */}
+            <div className="pt-4">
+                <Button onClick={handleSubmit} disabled={loading}>
+                    {loading ? "Menyimpan..." : "Simpan Lencana"}
+                </Button>
+            </div>
         </div>
     )
 }

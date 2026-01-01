@@ -7,6 +7,202 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                         Int                 @id @default(autoincrement())
+  full_name                  String              @db.VarChar(150)
+  email                      String              @unique @db.VarChar(150)
+  phone                      String?             @db.VarChar(30)
+  password                   String              @db.VarChar(255)
+  avatar_url                 String?
+  points                     Int                 @default(0)
+  reputation_score           Int                 @default(100)
+  role                       UserRole            @default(USER)
+  isVerified                 Boolean             @default(false)
+  created_at                 DateTime            @default(now())
+  updated_at                 DateTime            @updatedAt
+  auditLogs                  AuditLog[]
+  cancelHelpRequestsAsActor  CancelHelpRequest[] @relation("CancelActorUser")
+  cancelHelpRequestsExecuted CancelHelpRequest[] @relation("CancelPenaltyExecutor")
+  chatMessages               ChatMessage[]
+  emailTokens                EmailToken[]
+  helpAssignments            HelpAssignment[]
+  helpRequests               HelpRequest[]
+  notifications              Notification[]
+  reportsReceived            Report[]            @relation("ReportsToUser")
+  reportsMade                Report[]            @relation("ReportsByUser")
+  userBadges                 UserBadge[]
+  userMissions               UserMission[]
+}
+
+model HelpRequest {
+  id                 Int                 @id @default(autoincrement())
+  user_id            Int
+  title              String              @db.VarChar(200)
+  description        String
+  category           String              @db.VarChar(100)
+  latitude           Float
+  longitude          Float
+  radius             Int                 @default(5000)
+  status             HelpRequestStatus   @default(OPEN)
+  timeout_at         DateTime?
+  grace_period_end   DateTime?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  deleted_at         DateTime?
+  cancelHelpRequests CancelHelpRequest[]
+  chatRooms          ChatRoom[]
+  assignments        HelpAssignment[]
+  user               User                @relation(fields: [user_id], references: [id])
+  reports            Report[]
+}
+
+model HelpAssignment {
+  id                 Int                 @id @default(autoincrement())
+  help_request_id    Int
+  helper_id          Int
+  status             AssignmentStatus    @default(TAKEN)
+  taken_at           DateTime?
+  confirmed_at       DateTime?
+  failed_at          DateTime?
+  completed_at       DateTime?
+  updated_at         DateTime            @updatedAt
+  cancelHelpRequests CancelHelpRequest[]
+  chatRoom           ChatRoom?
+  helpRequest        HelpRequest         @relation(fields: [help_request_id], references: [id])
+  helper             User                @relation(fields: [helper_id], references: [id])
+}
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  user_id    Int
+  title      String           @db.VarChar(200)
+  body       String
+  type       NotificationType
+  is_read    Boolean          @default(false)
+  created_at DateTime         @default(now())
+  user       User             @relation(fields: [user_id], references: [id])
+}
+
+model Mission {
+  id              Int             @id @default(autoincrement())
+  code            String          @db.VarChar(50)
+  title           String          @db.VarChar(200)
+  description     String
+  category        MissionCategory
+  target_value    Int
+  reward_points   Int
+  reward_badge_id Int?
+  auto_complete   Boolean         @default(true)
+  rewardBadge     Badge?          @relation("MissionRewardBadge", fields: [reward_badge_id], references: [id])
+  userMissions    UserMission[]
+}
+
+model UserMission {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  mission_id     Int
+  progress_value Int       @default(0)
+  is_completed   Boolean   @default(false)
+  completed_at   DateTime?
+  mission        Mission   @relation(fields: [mission_id], references: [id])
+  user           User      @relation(fields: [user_id], references: [id])
+}
+
+model Badge {
+  id               Int         @id @default(autoincrement())
+  name             String      @db.VarChar(100)
+  icon_url         String
+  tier             String      @db.VarChar(50)
+  rewardedMissions Mission[]   @relation("MissionRewardBadge")
+  userBadges       UserBadge[]
+}
+
+model UserBadge {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  badge_id   Int
+  awarded_at DateTime @default(now())
+  badge      Badge    @relation(fields: [badge_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+}
+
+model Report {
+  id               Int          @id @default(autoincrement())
+  reporter_id      Int
+  reported_user_id Int
+  help_request_id  Int?
+  reason           String
+  status           ReportStatus @default(PENDING)
+  created_at       DateTime     @default(now())
+  helpRequest      HelpRequest? @relation(fields: [help_request_id], references: [id])
+  reportedUser     User         @relation("ReportsToUser", fields: [reported_user_id], references: [id])
+  reporter         User         @relation("ReportsByUser", fields: [reporter_id], references: [id])
+}
+
+model CancelHelpRequest {
+  id                  Int              @id @default(autoincrement())
+  help_request_id     Int
+  assignment_id       Int?
+  actor               CancelActor
+  actor_user_id       Int?
+  stage               CancelStage
+  reason_code         CancelReasonCode
+  reason_text         String?
+  impact_score        Int
+  violation_score     Int
+  created_at          DateTime         @default(now())
+  penalty_executed    Boolean          @default(false)
+  penalty_executed_at DateTime?
+  penalty_executed_by Int?
+  actorUser           User?            @relation("CancelActorUser", fields: [actor_user_id], references: [id])
+  assignment          HelpAssignment?  @relation(fields: [assignment_id], references: [id])
+  helpRequest         HelpRequest      @relation(fields: [help_request_id], references: [id])
+  penaltyExecutedBy   User?            @relation("CancelPenaltyExecutor", fields: [penalty_executed_by], references: [id])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  admin_id   Int
+  action     String   @db.VarChar(200)
+  metadata   String?
+  created_at DateTime @default(now())
+  admin      User     @relation(fields: [admin_id], references: [id])
+}
+
+model EmailToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  otp       String
+  type      TokenType
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model ChatRoom {
+  id              Int            @id @default(autoincrement())
+  help_request_id Int
+  assignment_id   Int            @unique
+  is_active       Boolean        @default(true)
+  created_at      DateTime       @default(now())
+  closed_at       DateTime?
+  messages        ChatMessage[]
+  assignment      HelpAssignment @relation(fields: [assignment_id], references: [id])
+  helpRequest     HelpRequest    @relation(fields: [help_request_id], references: [id])
+}
+
+model ChatMessage {
+  id           Int      @id @default(autoincrement())
+  chat_room_id Int
+  sender_id    Int
+  message      String
+  created_at   DateTime @default(now())
+  chatRoom     ChatRoom @relation(fields: [chat_room_id], references: [id])
+  sender       User     @relation(fields: [sender_id], references: [id])
+
+  @@index([chat_room_id])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -65,241 +261,15 @@ enum CancelStage {
 }
 
 enum CancelReasonCode {
-  // === REQUESTER ===
-  CHANGE_OF_MIND      
-  FOUND_OTHER_HELPER 
-  NO_LONGER_NEEDED 
-  HELPER_NO_RESPONSE 
-  HELPER_LATE 
-
-  // === HELPER ===
+  CHANGE_OF_MIND
+  FOUND_OTHER_HELPER
+  NO_LONGER_NEEDED
+  HELPER_NO_RESPONSE
+  HELPER_LATE
   CANNOT_REACH_LOCATION
-  REQUESTER_NO_SHOW 
+  REQUESTER_NO_SHOW
   REQUESTER_UNRESPONSIVE
   TASK_NOT_AS_DESCRIBED
-
-  // === SYSTEM ===
-  TIMEOUT 
-  POLICY_VIOLATION 
-}
-
-model User {
-  id               Int              @id @default(autoincrement())
-  full_name        String           @db.VarChar(150)
-  email            String           @unique @db.VarChar(150)
-  phone            String?          @db.VarChar(30)
-  password         String           @db.VarChar(255)
-  avatar_url       String?
-  points           Int              @default(0)
-  reputation_score Int              @default(100)
-  role             UserRole         @default(USER)
-  isVerified       Boolean          @default(false)
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
-
-  helpRequests     HelpRequest[]
-  helpAssignments  HelpAssignment[]
-  notifications    Notification[]
-  userMissions     UserMission[]
-  userBadges       UserBadge[]
-  reportsMade      Report[]         @relation("ReportsByUser")
-  reportsReceived  Report[]         @relation("ReportsToUser")
-  chatMessages     ChatMessage[]
-  auditLogs        AuditLog[]
-  cancelHelpRequestsAsActor   CancelHelpRequest[] @relation("CancelActorUser")
-  cancelHelpRequestsExecuted  CancelHelpRequest[] @relation("CancelPenaltyExecutor")
-
-  emailTokens      EmailToken[]
-}
-
-model HelpRequest {
-  id               Int                 @id @default(autoincrement())
-  user_id          Int
-  title            String              @db.VarChar(200)
-  description      String
-  category         String              @db.VarChar(100)
-  latitude         Float
-  longitude        Float
-  radius           Int                 @default(5000)
-  status           HelpRequestStatus   @default(OPEN)
-  timeout_at       DateTime?
-  grace_period_end DateTime?
-  created_at       DateTime            @default(now())
-  updated_at       DateTime            @updatedAt
-  deleted_at       DateTime?
-
-  user             User                @relation(fields: [user_id], references: [id])
-  assignments      HelpAssignment[]
-  reports          Report[]
-  chatRooms        ChatRoom[]
-
-  cancelHelpRequests     CancelHelpRequest[]
-}
-  
-model HelpAssignment {
-  id               Int              @id @default(autoincrement())
-  help_request_id  Int
-  helper_id        Int
-  status           AssignmentStatus @default(TAKEN)
-  taken_at         DateTime?
-  confirmed_at     DateTime?
-  failed_at        DateTime?
-  completed_at     DateTime?
-  updated_at       DateTime         @updatedAt
-  chatRoom         ChatRoom?
-
-  helpRequest      HelpRequest      @relation(fields: [help_request_id], references: [id])
-  helper           User             @relation(fields: [helper_id], references: [id])
-
-  cancelHelpRequests     CancelHelpRequest[]
-}
-
-model Notification {
-  id          Int              @id @default(autoincrement())
-  user_id     Int
-  title       String           @db.VarChar(200)
-  body        String
-  type        NotificationType
-  is_read     Boolean          @default(false)
-  created_at  DateTime         @default(now())
-
-  user        User             @relation(fields: [user_id], references: [id])
-}
-
-model Mission {
-  id              Int             @id @default(autoincrement())
-  code            String          @unique @db.VarChar(50)
-  title           String          @db.VarChar(200)
-  description     String
-  category        MissionCategory
-  target_value    Int
-  reward_points   Int
-  reward_badge_id Int?
-  auto_complete   Boolean         @default(true)
-
-  rewardBadge     Badge?          @relation("MissionRewardBadge", fields: [reward_badge_id], references: [id])
-  userMissions    UserMission[]
-}
-
-model UserMission {
-  id             Int        @id @default(autoincrement())
-  user_id        Int
-  mission_id     Int
-  progress_value Int        @default(0)
-  is_completed   Boolean    @default(false)
-  completed_at   DateTime?
-
-  user           User       @relation(fields: [user_id], references: [id])
-  mission        Mission    @relation(fields: [mission_id], references: [id])
-}
-
-model Badge {
-  id               Int         @id @default(autoincrement())
-  name             String      @db.VarChar(100)
-  icon_url         String
-  tier             String       @db.VarChar(50)
-
-  userBadges       UserBadge[]
-  rewardedMissions Mission[]    @relation("MissionRewardBadge")
-}
-
-model UserBadge {
-  id         Int         @id @default(autoincrement())
-  user_id    Int
-  badge_id   Int
-  awarded_at DateTime    @default(now())
-
-  user       User        @relation(fields: [user_id], references: [id])
-  badge      Badge       @relation(fields: [badge_id], references: [id])
-}
-
-model Report {
-  id               Int            @id @default(autoincrement())
-  reporter_id      Int
-  reported_user_id Int
-  help_request_id  Int?
-  reason           String
-  status           ReportStatus   @default(PENDING)
-  created_at       DateTime       @default(now())
-
-  reporter         User           @relation("ReportsByUser", fields: [reporter_id], references: [id])
-  reportedUser     User           @relation("ReportsToUser", fields: [reported_user_id], references: [id])
-  helpRequest      HelpRequest?   @relation(fields: [help_request_id], references: [id])
-}
-
-model CancelHelpRequest {
-  id               Int          @id @default(autoincrement())
-  help_request_id  Int
-  assignment_id    Int?
-  actor            CancelActor
-  actor_user_id    Int?
-  stage            CancelStage
-  reason_code      CancelReasonCode
-  reason_text      String?
-  impact_score     Int
-  violation_score  Int
-  created_at       DateTime     @default(now())
-
-  penalty_executed     Boolean   @default(false)
-  penalty_executed_at  DateTime?
-  penalty_executed_by  Int?
-
-  helpRequest      HelpRequest  @relation(fields: [help_request_id], references: [id])
-  assignment       HelpAssignment? @relation(fields: [assignment_id], references: [id])
-
-  actorUser        User? @relation("CancelActorUser", fields: [actor_user_id], references: [id])
-
-  penaltyExecutedBy User? @relation("CancelPenaltyExecutor", fields: [penalty_executed_by], references: [id])
-}
-
-
-
-model AuditLog {
-  id         Int       @id @default(autoincrement())
-  admin_id   Int
-  action     String     @db.VarChar(200)
-  metadata   String?
-  created_at DateTime   @default(now())
-
-  admin      User       @relation(fields: [admin_id], references: [id])
-}
-
-model EmailToken {
-  id        Int       @id @default(autoincrement())
-  userId    Int
-  otp       String
-  type      TokenType
-  expiresAt DateTime
-  createdAt DateTime  @default(now())
-
-  user      User      @relation(fields: [userId], references: [id])
-}
-
-model ChatRoom {
-  id              Int      @id @default(autoincrement())
-  help_request_id Int
-  assignment_id   Int
-  is_active       Boolean  @default(true)
-  created_at      DateTime @default(now())
-  closed_at       DateTime?
-
-  helpRequest     HelpRequest   @relation(fields: [help_request_id], references: [id])
-  assignment      HelpAssignment @relation(fields: [assignment_id], references: [id])
-
-  messages        ChatMessage[]
-
-  @@unique([assignment_id])
-}
-
-model ChatMessage {
-  id           Int      @id @default(autoincrement())
-  chat_room_id Int
-  sender_id    Int
-  message      String
-  created_at   DateTime @default(now())
-
-  chatRoom     ChatRoom @relation(fields: [chat_room_id], references: [id])
-  sender       User     @relation(fields: [sender_id], references: [id])
-
-  @@index([chat_room_id])
+  TIMEOUT
+  POLICY_VIOLATION
 }

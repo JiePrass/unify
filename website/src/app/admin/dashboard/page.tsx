@@ -150,8 +150,7 @@ export default function DashboardPage() {
                 className="flex justify-between border-b pb-2"
               >
                 <span>{u.name}</span>
-                <span>{u.completedHelps} helps</span>
-                <span>⭐ {u.reputation}</span>
+                <span>{u.points}</span>
               </div>
             ))}
           </div>
